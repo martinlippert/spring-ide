@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -25,7 +26,12 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.TableColumnLayout;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.CellLabelProvider;
+import org.eclipse.jface.viewers.ColumnLayoutData;
+import org.eclipse.jface.viewers.ColumnPixelData;
+import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -57,6 +63,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -100,6 +107,8 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 	private static final String COLUMN_DATA = "boot-dash-column-data";
 
 	private TableViewer tv;
+	private Composite contents;
+	private BootDashColumnLayout columnLayout;
 	private BootDashViewModel viewModel;
 	private BootDashModel model;
 	private MultiSelection<BootDashElement> selection;
@@ -182,15 +191,20 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 	@Override
 	public void createContents(Composite page) {
 		// Cleanup first
-		if (tv != null && !tv.getControl().isDisposed()) {
-			tv.getControl().dispose();
+		if (contents != null && !contents.isDisposed()) {
+			contents.dispose();
 		}
 
 		// Initialize column table state objects
 		initColumnModels();
 
+		contents = new Composite(page, page.getStyle());
+		columnLayout = new BootDashColumnLayout();
+		contents.setLayout(columnLayout);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(contents);
+
 		// Create table viewer again and attach all listeners.
-		tv = new TableViewer(page, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.NO_SCROLL); // Note: No SWT.SCROLL options.
+		tv = new TableViewer(contents, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.NO_SCROLL); // Note: No SWT.SCROLL options.
 		// Assumes its up to the page to be scrollable.
 		tv.setContentProvider(new BootDashContentProvider(model));
 		// tv.setLabelProvider(new ViewLabelProvider());
@@ -199,7 +213,6 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 		tv.getTable().setHeaderVisible(true);
 		stylers = new Stylers(tv.getTable().getFont());
 
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(tv.getControl());
 
 		Arrays.sort(columnModels, BootDashColumnModel.INDEX_COMPARATOR);
 		for (final BootDashColumnModel columnModel :  columnModels) {
@@ -544,7 +557,7 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 		TableViewerColumn viewer = new TableViewerColumn(tv, columnModel.getAllignment());
 		final TableColumn tc = viewer.getColumn();
 		tc.setText(columnModel.getLabel());
-		tc.setWidth(columnModel.getWidth());
+		columnLayout.setColumnData(tc, new ColumnPixelData(columnModel.getWidth()));
 		tc.setResizable(true);
 		tc.setMoveable(true);
 		tc.setData(COLUMN_DATA, columnModel);
@@ -571,7 +584,10 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 			TableColumn tc = tv.getTable().getColumns()[i];
 			if (tc.getData(COLUMN_DATA) instanceof BootDashColumnModel) {
 				BootDashColumnModel columnModel = (BootDashColumnModel) tc.getData(COLUMN_DATA);
-				columnModel.setWidth(tc.getWidth());
+				ColumnLayoutData layoutData = columnLayout.getColumnData(tc);
+				if (layoutData instanceof ColumnPixelData) {
+					columnModel.setWidth(((ColumnPixelData)layoutData).width);
+				}
 				if (columnOrderChanged) {
 					int j = 0;
 					for (; j < tv.getTable().getColumnOrder().length && tv.getTable().getColumnOrder()[j] != i; j++);
@@ -637,7 +653,7 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 						sortedModels[i].setVisibility(editors[i].getSelection());
 					}
 					super.okPressed();
-					BootDashElementsTableSection.this.createContents(tv.getControl().getParent());
+					BootDashElementsTableSection.this.createContents(contents.getParent());
 				}
 
 				@Override
@@ -648,6 +664,62 @@ public class BootDashElementsTableSection extends PageSection implements MultiSe
 
 			};
 			viewSettingsDialog.open();
+		}
+
+	}
+
+	private static class BootDashColumnLayout extends TableColumnLayout {
+
+		private static final boolean IS_GTK = Util.isGtk();
+
+		ColumnLayoutData getColumnData(TableColumn tc) {
+			return (ColumnLayoutData) tc.getData(LAYOUT_DATA);
+		}
+
+		@Override
+		protected Point computeSize(Composite composite, int wHint, int hHint, boolean flushCache) {
+			Table table = (Table) composite.getChildren()[0];
+			Point result = table.computeSize(wHint, hHint);
+			int width = 0;
+			int size = getColumnCount(table);
+			for (int i = 0; i < size; ++i) {
+				ColumnLayoutData layoutData = getLayoutData(table, i);
+				if (layoutData instanceof ColumnPixelData) {
+					ColumnPixelData col = (ColumnPixelData) layoutData;
+					width += col.width;
+					if (col.addTrim) {
+						width += getColumnTrim();
+					}
+				} else if (layoutData instanceof ColumnWeightData) {
+					ColumnWeightData col = (ColumnWeightData) layoutData;
+					width += col.minimumWidth;
+				} else {
+					Assert.isTrue(false, "Unknown column layout data"); //$NON-NLS-1$
+				}
+			}
+			result.x = width;
+			return result;
+		}
+
+		@Override
+		protected void setColumnWidths(Scrollable tableTree, int[] widths) {
+			Table table = (Table) tableTree;
+
+			TableColumn[] columns = table.getColumns();
+			int total = 0;
+			for (int i = 0; i < widths.length; i++) {
+				columns[i].setWidth(widths[i]);
+				total += widths[i];
+			}
+
+			int[] order = table.getColumnOrder();
+			if (!IS_GTK && order.length > 0) {
+				TableColumn lastColumn = table.getColumn(order[order.length - 1]);
+				int diff = table.getClientArea().width - total;
+				if (diff > 0) {
+					lastColumn.setWidth(diff + lastColumn.getWidth());
+				}
+			}
 		}
 
 	}
