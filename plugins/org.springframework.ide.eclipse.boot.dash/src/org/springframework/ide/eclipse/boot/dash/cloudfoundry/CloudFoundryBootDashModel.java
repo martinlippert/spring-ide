@@ -44,16 +44,23 @@ import org.springframework.ide.eclipse.boot.dash.model.BootDashModel;
 import org.springframework.ide.eclipse.boot.dash.model.BootDashModelContext;
 import org.springframework.ide.eclipse.boot.dash.model.ModifiableModel;
 import org.springframework.ide.eclipse.boot.dash.model.Operation;
-import org.springframework.ide.eclipse.boot.dash.model.RunState;
 import org.springframework.ide.eclipse.boot.dash.model.RefreshState;
+import org.springframework.ide.eclipse.boot.dash.model.RunState;
 import org.springframework.ide.eclipse.boot.dash.model.UserInteractions;
 import org.springframework.ide.eclipse.boot.dash.model.runtargettypes.RunTargetType;
 import org.springframework.ide.eclipse.boot.dash.views.BootDashModelConsoleManager;
+import org.springsource.ide.eclipse.commons.frameworks.core.ExceptionUtil;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Executable;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Promise;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Promises;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Resolvable;
 import org.springsource.ide.eclipse.commons.livexp.core.LiveSet;
 
 public class CloudFoundryBootDashModel extends BootDashModel implements ModifiableModel {
 
 	private IPropertyStore modelStore;
+
+	private Promises promises = Promises.getDefault();
 
 	private ProjectAppStore projectAppStore;
 
@@ -173,15 +180,21 @@ public class CloudFoundryBootDashModel extends BootDashModel implements Modifiab
 		if (elements == null) {
 			return;
 		}
-
-		try {
-			setState(RefreshState.LOADING);
-			Operation<Void> op = new TargetApplicationsRefreshOperation(this);
-			getOperationsExecution().runOpAsynch(op);
-		} catch (Exception e) {
-			setState(RefreshState.READY);
-			BootDashActivator.log(e);
-		}
+		setState(RefreshState.LOADING);
+		promises.run(new Executable() {
+			protected Promise<Void> run() throws Exception {
+				Operation<Void> op = new TargetApplicationsRefreshOperation(CloudFoundryBootDashModel.this);
+				return getOperationsExecution().runOpAsynch(op);
+			}
+		}).then(new Resolvable<Void>() {
+			public void resolve(Void value) {
+				setState(RefreshState.READY);
+			}
+			public void reject(Exception e) {
+				setState(RefreshState.error(ExceptionUtil.getMessage(e)));
+				BootDashActivator.log(e);
+			}
+		});
 	}
 
 	public void internalSetState(RefreshState newState) {

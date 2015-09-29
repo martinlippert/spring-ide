@@ -20,7 +20,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
-import org.springframework.ide.eclipse.boot.dash.BootDashActivator;
 import org.springframework.ide.eclipse.boot.dash.cloudfoundry.CloudAppInstances;
 import org.springframework.ide.eclipse.boot.dash.cloudfoundry.CloudFoundryBootDashModel;
 
@@ -47,8 +46,8 @@ public final class TargetApplicationsRefreshOperation extends CloudOperation {
 
 	@Override
 	synchronized protected void doCloudOp(IProgressMonitor monitor) throws Exception, OperationCanceledException {
-		try {
-
+//		try {
+//
 			// 1. Fetch basic list of applications. Should be the "faster" of
 			// the
 			// two refresh operations
@@ -83,9 +82,9 @@ public final class TargetApplicationsRefreshOperation extends CloudOperation {
 			// 2. Launch the slower app stats/instances refresh operation.
 			this.model.getOperationsExecution().runOpAsynch(new AppInstancesRefreshOperation(this.model));
 
-		} catch (Exception e) {
-			BootDashActivator.log(e);
-		}
+//		} catch (Exception e) {
+//			BootDashActivator.log(e);
+//		}
 	}
 
 	public ISchedulingRule getSchedulingRule() {

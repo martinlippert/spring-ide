@@ -20,6 +20,7 @@ import org.cloudfoundry.client.lib.domain.CloudApplication;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.springframework.ide.eclipse.boot.dash.BootDashActivator;
 import org.springframework.ide.eclipse.boot.dash.cloudfoundry.CloudAppInstances;
 import org.springframework.ide.eclipse.boot.dash.cloudfoundry.CloudFoundryBootDashModel;
 import org.springframework.ide.eclipse.boot.dash.model.RefreshState;
@@ -38,24 +39,31 @@ public class AppInstancesRefreshOperation extends CloudOperation {
 	}
 
 	@Override
-	protected void doCloudOp(IProgressMonitor monitor) throws Exception, OperationCanceledException {
-		List<CloudAppInstances> appInstances = this.model.getAppCache().getAppInstances();
+	protected void doCloudOp(IProgressMonitor monitor) throws OperationCanceledException {
+		try {
+			List<CloudAppInstances> appInstances = this.model.getAppCache().getAppInstances();
 
-		List<CloudApplication> appsToLookUp = new ArrayList<CloudApplication>();
-		for (CloudAppInstances instances : appInstances) {
-			CloudApplication app = instances.getApplication();
-			if (app != null) {
-				appsToLookUp.add(app);
+			List<CloudApplication> appsToLookUp = new ArrayList<CloudApplication>();
+			for (CloudAppInstances instances : appInstances) {
+				CloudApplication app = instances.getApplication();
+				if (app != null) {
+					appsToLookUp.add(app);
+				}
 			}
-		}
-		if (!appsToLookUp.isEmpty()) {
-			Map<CloudApplication, ApplicationStats> stats = requests.getApplicationStats(appsToLookUp);
-			for (Entry<CloudApplication, ApplicationStats> entry : stats.entrySet()) {
-				CloudAppInstances instances = new CloudAppInstances(entry.getKey(), entry.getValue());
-				this.model.updateApplication(instances);
+			if (!appsToLookUp.isEmpty()) {
+				Map<CloudApplication, ApplicationStats> stats = requests.getApplicationStats(appsToLookUp);
+				for (Entry<CloudApplication, ApplicationStats> entry : stats.entrySet()) {
+					CloudAppInstances instances = new CloudAppInstances(entry.getKey(), entry.getValue());
+					this.model.updateApplication(instances);
+				}
 			}
+			model.internalSetState(RefreshState.READY);
+		} catch (OperationCanceledException e) {
+			throw e;
+		} catch (Exception e) {
+			model.internalSetState(RefreshState.error(e));
+			BootDashActivator.log(e);
 		}
-		model.internalSetState(RefreshState.READY);
 	}
 
 	public ISchedulingRule getSchedulingRule() {

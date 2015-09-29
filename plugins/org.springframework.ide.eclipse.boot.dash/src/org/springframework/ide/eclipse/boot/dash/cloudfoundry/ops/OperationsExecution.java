@@ -19,23 +19,35 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.springframework.ide.eclipse.boot.dash.BootDashActivator;
 import org.springframework.ide.eclipse.boot.dash.model.Operation;
 import org.springframework.ide.eclipse.boot.dash.model.UserInteractions;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Promise;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Deferred;
+import org.springsource.ide.eclipse.commons.frameworks.core.async.Promises;
 
 public class OperationsExecution {
 
+	//TODO: does this belong in here?
+	// Better to chain up error handling somehow using the returned 'Promise'.
 	private final UserInteractions ui;
+	private Promises promises = Promises.getDefault();
 
 	public OperationsExecution(UserInteractions ui) {
 		this.ui = ui;
 	}
 
-	public void runOpAsynch(final Operation<?> op) {
+	public <T> Promise<T> runOpAsynch(final Operation<T> op) {
+		final Deferred<T> done = promises.create();
+		System.out.println("runAsynch: "+op.getName());
 		Job job = new Job(op.getName()) {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					op.run(monitor);
+					T value = op.run(monitor);
+					System.out.println("runAsynch: "+op.getName()+" OK: "+value);
+					done.resolve(value);
 				} catch (Exception e) {
+					System.out.println("runAsynch: "+op.getName()+" THROWS: "+e);
+					done.reject(e);
 					if (!(e instanceof OperationCanceledException)) {
 						if (ui != null) {
 							String message = e.getMessage() != null && e.getMessage().trim().length() > 0
@@ -63,5 +75,6 @@ public class OperationsExecution {
 
 		job.setPriority(Job.INTERACTIVE);
 		job.schedule();
+		return done;
 	}
 }

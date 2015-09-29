@@ -27,7 +27,7 @@ public abstract class CloudOperation extends Operation<Void> {
 		this.requests = new ClientRequests(model);
 	}
 
-	abstract protected void doCloudOp(IProgressMonitor monitor) throws Exception, OperationCanceledException;
+	protected abstract void doCloudOp(IProgressMonitor monitor) throws Exception, OperationCanceledException;
 
 	@Override
 	protected Void runOp(IProgressMonitor monitor) throws Exception, OperationCanceledException {
