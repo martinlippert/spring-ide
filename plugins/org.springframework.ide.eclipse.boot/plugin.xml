@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-  
+
+   <extension
+         id="bootnature"
+         name="Spring Boot Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run class="org.springframework.ide.eclipse.boot.core.SpringBootNature"/>
+      </runtime>
+      <requires-nature
+            id="org.springframework.ide.eclipse.core.springnature">
+      </requires-nature>
+   </extension>
    <extension
          point="org.eclipse.ui.handlers">
       <handler
@@ -74,6 +85,13 @@
 	              value="org.springframework.ide.eclipse.core.springnature">
 	        </objectState>
          </visibility>
+         <action
+         	class="org.springframework.ide.eclipse.boot.ui.AddRemoveBootNature"
+         	enablesFor="+"
+         	id="org.springframework.ide.eclipse.boot.ui.AddRemoveBootNature"
+         	label="Add/Remove Boot Nature"
+			menubarPath="org.springframework.ide.eclipse.ui.tools/group0">
+		</action>
          <action
                    class="org.springframework.ide.eclipse.boot.ui.EnableDisableBootDevtools"
                    enablesFor="1"

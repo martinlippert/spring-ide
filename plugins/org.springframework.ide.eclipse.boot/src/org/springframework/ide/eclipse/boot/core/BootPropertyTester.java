@@ -88,12 +88,15 @@ public class BootPropertyTester extends PropertyTester {
 		return false;
 	}
 
-
 	public static boolean isBootProject(IProject project) {
 		if (project==null || ! project.isAccessible()) {
 			return false;
 		}
 		try {
+			if (project.hasNature(SpringBootNature.NATURE_ID)) {
+				return true;
+			}
+			//Also try to see if project 'looks like' a boot project
 			if (project.hasNature(JavaCore.NATURE_ID)) {
 				IJavaProject jp = JavaCore.create(project);
 				IClasspathEntry[] classpath = jp.getResolvedClasspath(true);
