@@ -139,7 +139,7 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				BootDashActivator.log(e);
 			}
 		}
-		return 0;
+		return DeploymentProperties.DEFAULT_MEMORY;
 	}
 
 	@Override
@@ -173,20 +173,20 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				BootDashActivator.log(e);
 			}
 		}
-		return 0;
+		return DeploymentProperties.DEFAULT_INSTANCES;
 	}
 
-	@Override
-	public String getHost() {
-		ScalarNode n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
-		return n == null ? getAppName() : n.getValue();
-	}
-
-	@Override
-	public String getDomain() {
-		ScalarNode n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
-		return n == null ? (domains == null || domains.isEmpty() ? null : domains.get(0).getName()) : n.getValue();
-	}
+//	@Override
+//	public String getHost() {
+//		ScalarNode n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
+//		return n == null ? getAppName() : n.getValue();
+//	}
+//
+//	@Override
+//	public String getDomain() {
+//		ScalarNode n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
+//		return n == null ? (domains == null || domains.isEmpty() ? null : domains.get(0).getName()) : n.getValue();
+//	}
 
 	@Override
 	public List<String> getServices() {
@@ -247,7 +247,7 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 		_lineAddedAtTheEndOfAppNode = false;
 
 		if (appNode == null) {
-			Map<Object, Object> obj = ApplicationManifestHandler.toYaml(props);
+			Map<Object, Object> obj = ApplicationManifestHandler.toYaml(props, domains);
 			if (applicationsValueNode == null) {
 				DumperOptions options = new DumperOptions();
 				options.setExplicitStart(true);
@@ -297,7 +297,7 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				/*
 				 * Value == null if number of instances is 1, i.e. remove instances from YAML
 				 */
-				Integer newValue = props.getInstances() == CloudApplicationDeploymentProperties.DEFAULT_INSTANCES ? null : new Integer(props.getInstances());
+				Integer newValue = props.getInstances() == DeploymentProperties.DEFAULT_INSTANCES ? null : new Integer(props.getInstances());
 				edit = createEdit(appNode, newValue, ApplicationManifestHandler.INSTANCES_PROP);
 				if (edit != null) {
 					edits.addChild(edit);
@@ -325,33 +325,33 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				}
 			}
 
-			/*
-			 * If 'host' property is null it means it's unavailable, therefore, we cannot compare it.
-			 */
-			if (props.getHost() != null) {
-				String host = getHost();
-				if (!props.getHost().equals(host)) {
-					int index = host == null ? -1 : host.indexOf(RANDOM_VAR);
-					if (index < 0 || !Pattern.matches(host.replaceAll(RANDOM_VAR_REGEX, Matcher.quoteReplacement("[A-Z,a-z,0-9]*")), props.getHost())) {
-						edit = createEdit(appNode, props.getHost(), ApplicationManifestHandler.SUB_DOMAIN_PROP);
-						if (edit != null) {
-							edits.addChild(edit);
-						}
-					}
-				}
-			}
-
-			/*
-			 * If 'domain' property is null it means it's unavailable, therefore, we cannot compare it.
-			 */
-			if (props.getDomain() != null) {
-				if (!props.getDomain().equals(getDomain())) {
-					edit = createEdit(appNode, props.getDomain(), ApplicationManifestHandler.DOMAIN_PROP);
-					if (edit != null) {
-						edits.addChild(edit);
-					}
-				}
-			}
+//			/*
+//			 * If 'host' property is null it means it's unavailable, therefore, we cannot compare it.
+//			 */
+//			if (props.getHost() != null) {
+//				String host = getHost();
+//				if (!props.getHost().equals(host)) {
+//					int index = host == null ? -1 : host.indexOf(RANDOM_VAR);
+//					if (index < 0 || !Pattern.matches(host.replaceAll(RANDOM_VAR_REGEX, Matcher.quoteReplacement("[A-Z,a-z,0-9]*")), props.getHost())) {
+//						edit = createEdit(appNode, props.getHost(), ApplicationManifestHandler.SUB_DOMAIN_PROP);
+//						if (edit != null) {
+//							edits.addChild(edit);
+//						}
+//					}
+//				}
+//			}
+//
+//			/*
+//			 * If 'domain' property is null it means it's unavailable, therefore, we cannot compare it.
+//			 */
+//			if (props.getDomain() != null) {
+//				if (!props.getDomain().equals(getDomain())) {
+//					edit = createEdit(appNode, props.getDomain(), ApplicationManifestHandler.DOMAIN_PROP);
+//					if (edit != null) {
+//						edits.addChild(edit);
+//					}
+//				}
+//			}
 
 		}
 		return edits;
@@ -669,6 +669,24 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 		} else {
 			return appNode.getStartMark().getColumn();
 		}
+	}
+
+	@Override
+	public Set<String> getUris() {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public int getDiskQuota() {
+		ScalarNode n = getNode(appNode, ApplicationManifestHandler.DISK_QUOTA_PROP, ScalarNode.class);
+		if (n != null) {
+			try {
+				return ApplicationManifestHandler.convertMemory(((ScalarNode)n).getValue());
+			} catch (CoreException e) {
+				BootDashActivator.log(e);
+			}
+		}
+		return DeploymentProperties.DEFAULT_MEMORY;
 	}
 
 }
