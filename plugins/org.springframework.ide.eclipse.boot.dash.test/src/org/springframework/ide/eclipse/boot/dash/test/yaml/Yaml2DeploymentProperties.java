@@ -167,6 +167,17 @@ public class Yaml2DeploymentProperties {
 	}
 
 	@Test
+	public void test_random_route_5() throws Exception {
+		CloudApplicationDeploymentProperties props = readDeploymentProperties("manifest-parse-data/random-route-5.yml");
+		HashSet<String> uris = new HashSet<>(props.getUris());
+		assertEquals(1, uris.size());
+		String uri = uris.iterator().next();
+		String host = uri.substring(0, uri.indexOf('.'));
+		HashSet<String> expected = new HashSet<>(Collections.singletonList(host + ".springsource.org"));
+		assertEquals("Uris sets not equal", expected, uris);
+	}
+
+	@Test
 	public void test_domains_1() throws Exception {
 		CloudApplicationDeploymentProperties props = readDeploymentProperties("manifest-parse-data/domains-1.yml");
 		HashSet<String> uris = new HashSet<>(props.getUris());

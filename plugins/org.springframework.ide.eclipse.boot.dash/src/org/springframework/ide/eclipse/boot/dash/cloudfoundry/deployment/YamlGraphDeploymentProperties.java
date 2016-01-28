@@ -13,15 +13,15 @@ package org.springframework.ide.eclipse.boot.dash.cloudfoundry.deployment;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.cloudfoundry.client.lib.domain.CloudDomain;
 import org.eclipse.core.runtime.CoreException;
@@ -31,6 +31,7 @@ import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.springframework.ide.eclipse.boot.dash.BootDashActivator;
 import org.springframework.ide.eclipse.boot.dash.cloudfoundry.ApplicationManifestHandler;
+import org.springframework.ide.eclipse.boot.dash.cloudfoundry.CloudApplicationURL;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.DumperOptions.LineBreak;
@@ -56,9 +57,6 @@ import com.google.common.base.Objects;
  *
  */
 public class YamlGraphDeploymentProperties implements DeploymentProperties {
-
-	private static final String RANDOM_VAR = "${random}"; //$NON-NLS-1$
-	private static final String RANDOM_VAR_REGEX = "\\$\\{random\\}"; //$NON-NLS-1$
 
 	private String content;
 	private MappingNode appNode;
@@ -326,32 +324,14 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 			}
 
 //			/*
-//			 * If 'host' property is null it means it's unavailable, therefore, we cannot compare it.
+//			 * If URIs are different then create diff edits for hosts, domains, no-route attrs and other related ones.
 //			 */
-//			if (props.getHost() != null) {
-//				String host = getHost();
-//				if (!props.getHost().equals(host)) {
-//					int index = host == null ? -1 : host.indexOf(RANDOM_VAR);
-//					if (index < 0 || !Pattern.matches(host.replaceAll(RANDOM_VAR_REGEX, Matcher.quoteReplacement("[A-Z,a-z,0-9]*")), props.getHost())) {
-//						edit = createEdit(appNode, props.getHost(), ApplicationManifestHandler.SUB_DOMAIN_PROP);
-//						if (edit != null) {
-//							edits.addChild(edit);
-//						}
-//					}
-//				}
-//			}
-//
-//			/*
-//			 * If 'domain' property is null it means it's unavailable, therefore, we cannot compare it.
-//			 */
-//			if (props.getDomain() != null) {
-//				if (!props.getDomain().equals(getDomain())) {
-//					edit = createEdit(appNode, props.getDomain(), ApplicationManifestHandler.DOMAIN_PROP);
-//					if (edit != null) {
-//						edits.addChild(edit);
-//					}
-//				}
-//			}
+			if (!getUris().equals(props.getUris())) {
+				edit = getDifferenceForUris(props.getUris());
+				if (edit != null) {
+					edits.addChild(edit);
+				}
+			}
 
 		}
 		return edits;
@@ -365,6 +345,11 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 			}
 			_lineAddedAtTheEndOfAppNode = true;
 		}
+	}
+
+	private TextEdit getDifferenceForUris(Collection<String> uris) {
+		MultiTextEdit me = new MultiTextEdit();
+		return me.hasChildren() ? me : null;
 	}
 
 	/**
@@ -673,7 +658,88 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 
 	@Override
 	public Set<String> getUris() {
-		return Collections.emptySet();
+		ScalarNode n = getNode(appNode, ApplicationManifestHandler.NO_ROUTE_PROP, ScalarNode.class);
+		SequenceNode sequence;
+		if (n != null && String.valueOf(true).equals(n.getValue())) {
+			return Collections.emptySet();
+		}
+
+		HashSet<String> hostsSet = new LinkedHashSet<>();
+		HashSet<String> domainsSet = new LinkedHashSet<>();
+
+		/*
+		 * Gather domains from app node from 'domain' and 'domains' attributes
+		 */
+		n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
+		if (n != null) {
+			domainsSet.add(n.getValue());
+		}
+		sequence = getNode(appNode, ApplicationManifestHandler.DOMAINS_PROP, SequenceNode.class);
+		if (sequence != null) {
+			for (Node o : sequence.getValue()) {
+				if (o instanceof ScalarNode) {
+					domainsSet.add(((ScalarNode)o).getValue());
+				}
+			}
+		}
+
+		/*
+		 * Gather hosts from app node from 'host' and 'hosts'
+		 * attributes.
+		 */
+		n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
+		if (n != null) {
+			hostsSet.add(n.getValue());
+		}
+		sequence = getNode(appNode, ApplicationManifestHandler.SUB_DOMAINS_PROP, SequenceNode.class);
+		if (sequence != null) {
+			for (Node o : sequence.getValue()) {
+				if (o instanceof ScalarNode) {
+					hostsSet.add(((ScalarNode)o).getValue());
+				}
+			}
+		}
+
+		/*
+		 * If no host names found check for "random-route: true" and
+		 * "no-hostname: true" otherwise take app name as the host name
+		 */
+		if (hostsSet.isEmpty()) {
+			n = getNode(appNode, ApplicationManifestHandler.RANDOM_ROUTE_PROP, ScalarNode.class);
+			if (n != null && String.valueOf(true).equals(n.getValue())) {
+				hostsSet.add(ApplicationManifestHandler.RANDOM_VAR);
+				domainsSet.clear();
+				domainsSet.add(domains.get(0).getName());
+			} else {
+				n = getNode(appNode, ApplicationManifestHandler.NO_HOSTNAME_PROP, ScalarNode.class);
+				if (n == null || !String.valueOf(true).equals(n.getValue())) {
+					hostsSet.add(getAppName());
+				}
+			}
+		}
+
+		/*
+		 * Set a domain if they are still empty
+		 */
+		if (domainsSet.isEmpty()) {
+			domainsSet.add(domains.get(0).getName());
+		}
+
+		/*
+		 * Compose URIs for application based on hosts and domains
+		 */
+		Set<String> uris = new HashSet<>();
+		for (String d : domainsSet) {
+			if (hostsSet.isEmpty()) {
+				uris.add(new CloudApplicationURL(null, d).getUrl());
+			} else {
+				for (String h : hostsSet) {
+					uris.add(new CloudApplicationURL(h, d).getUrl());
+				}
+			}
+		}
+
+		return uris;
 	}
 
 	@Override

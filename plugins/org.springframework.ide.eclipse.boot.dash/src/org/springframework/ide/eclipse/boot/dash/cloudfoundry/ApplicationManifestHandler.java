@@ -50,6 +50,8 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class ApplicationManifestHandler {
 
+	public static final String RANDOM_VAR = "${random}"; //$NON-NLS-1$
+
 	public static final String APPLICATIONS_PROP = "applications";
 
 	public static final String NAME_PROP = "name";
@@ -577,19 +579,15 @@ public class ApplicationManifestHandler {
 			host = getValue(allResults, SUB_DOMAIN_PROP, String.class);
 		}
 		if (host != null) {
-			hostsSet.add(extractHost(host, 5));
+			hostsSet.add(host);
 		}
 		List<String> hostList = (List<String>) getValue(allResults, SUB_DOMAINS_PROP, List.class);
 		if (hostList != null) {
-			for (String h : hostList) {
-				hostsSet.add(extractHost(h, 5));
-			}
+			hostsSet.addAll(hostList);
 		}
 		hostList = (List<String>) getValue(application, SUB_DOMAINS_PROP, List.class);
 		if (hostList != null) {
-			for (String h : hostList) {
-				hostsSet.add(extractHost(h, 5));
-			}
+			hostsSet.addAll(hostList);
 		}
 
 		/*
@@ -603,6 +601,8 @@ public class ApplicationManifestHandler {
 			}
 			if (Boolean.TRUE.equals(randomRoute)) {
 				hostsSet.add(extractHost("${random}", 10));
+				domainsSet.clear();
+				domainsSet.add(domains.get(0).getName());
 			} else {
 				Boolean noHostName = getValue(application, NO_HOSTNAME_PROP, Boolean.class);
 				if (noHostName == null) {
@@ -653,13 +653,11 @@ public class ApplicationManifestHandler {
 
 	private String extractHost(String subdomain, int length) {
 		// Check for random word
-		int varIndex = subdomain.indexOf('$');
-		int startIndex = subdomain.indexOf('{');
-		int endIndex = subdomain.indexOf('}');
-		int randomIndex = subdomain.indexOf("random");
-		if (varIndex >= 0 && startIndex > varIndex && randomIndex > startIndex && endIndex > randomIndex) {
+		int varIndex = subdomain.indexOf(RANDOM_VAR);
+		while (varIndex >= 0)  {
 			String randomWord = RandomStringUtils.randomAlphabetic(length);
-			subdomain = subdomain.replace(subdomain.substring(varIndex, endIndex + 1), randomWord);
+			subdomain = subdomain.replace(subdomain.substring(varIndex, RANDOM_VAR.length()), randomWord);
+			varIndex = subdomain.indexOf(RANDOM_VAR);
 		}
 		return subdomain;
 	}
