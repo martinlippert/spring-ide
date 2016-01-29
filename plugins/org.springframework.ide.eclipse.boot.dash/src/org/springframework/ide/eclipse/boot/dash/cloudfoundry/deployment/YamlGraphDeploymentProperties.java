@@ -64,8 +64,6 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 	private Yaml yaml;
 	private List<CloudDomain> domains;
 
-	private boolean _lineAddedAtTheEndOfAppNode = false;;
-
 	public YamlGraphDeploymentProperties(String content, String appName, List<CloudDomain> domains) {
 		super();
 		this.appNode = null;
@@ -174,18 +172,6 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 		return DeploymentProperties.DEFAULT_INSTANCES;
 	}
 
-//	@Override
-//	public String getHost() {
-//		ScalarNode n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
-//		return n == null ? getAppName() : n.getValue();
-//	}
-//
-//	@Override
-//	public String getDomain() {
-//		ScalarNode n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
-//		return n == null ? (domains == null || domains.isEmpty() ? null : domains.get(0).getName()) : n.getValue();
-//	}
-
 	@Override
 	public List<String> getServices() {
 		SequenceNode sequence = getNode(appNode, ApplicationManifestHandler.SERVICES_PROP, SequenceNode.class);
@@ -242,7 +228,6 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 	public MultiTextEdit getDifferences(DeploymentProperties props) {
 		MultiTextEdit edits = new MultiTextEdit();
 		TextEdit edit;
-		_lineAddedAtTheEndOfAppNode = false;
 
 		if (appNode == null) {
 			Map<Object, Object> obj = ApplicationManifestHandler.toYaml(props, domains);
@@ -323,33 +308,160 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				}
 			}
 
-//			/*
-//			 * If URIs are different then create diff edits for hosts, domains, no-route attrs and other related ones.
-//			 */
-			if (!getUris().equals(props.getUris())) {
-				edit = getDifferenceForUris(props.getUris());
-				if (edit != null) {
-					edits.addChild(edit);
-				}
-			}
-
-		}
-		return edits;
-	}
-
-	private void addLineBreakToAppNodeIfNeeded(StringBuilder serializedValue, int position) {
-		if (!_lineAddedAtTheEndOfAppNode) {
-			ReplaceEdit edit = addLineBreakIfMissing(position);
+			/*
+			 * If any text edits are produced then there are differences in the URIs
+			 */
+			edit = getDifferenceForUris(props.getUris());
 			if (edit != null) {
-				serializedValue.insert(0, System.lineSeparator());
+				edits.addChild(edit);
 			}
-			_lineAddedAtTheEndOfAppNode = true;
+
 		}
+		return edits.hasChildren() ? edits : null;
 	}
 
 	private TextEdit getDifferenceForUris(Collection<String> uris) {
 		MultiTextEdit me = new MultiTextEdit();
+		SequenceNode sequence;
+		ScalarNode n;
+
+		LinkedHashSet<String> otherHosts = new LinkedHashSet<>();
+		LinkedHashSet<String> otherDomains = new LinkedHashSet<>();
+		ApplicationManifestHandler.extractHostsAndDomains(uris, domains, otherHosts, otherDomains);
+		boolean otherNoRoute = otherHosts.isEmpty() && otherDomains.isEmpty();
+		boolean otherNoHostname = otherHosts.isEmpty() && !otherDomains.isEmpty();
+
+		LinkedHashSet<String> currentHosts = new LinkedHashSet<>();
+		LinkedHashSet<String> currentDomains = new LinkedHashSet<>();
+
+		n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
+		if (n != null) {
+			currentHosts.add(n.getValue());
+		}
+		sequence = getNode(appNode, ApplicationManifestHandler.SUB_DOMAINS_PROP, SequenceNode.class);
+		if (sequence != null) {
+			for (Node o : sequence.getValue()) {
+				if (o instanceof ScalarNode) {
+					currentHosts.add(((ScalarNode) o).getValue());
+				}
+			}
+		}
+
+		/*
+		 * Gather domains from app node from 'domain' and 'domains' attributes
+		 */
+		n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
+		if (n != null) {
+			currentDomains.add(n.getValue());
+		}
+		sequence = getNode(appNode, ApplicationManifestHandler.DOMAINS_PROP, SequenceNode.class);
+		if (sequence != null) {
+			for (Node o : sequence.getValue()) {
+				if (o instanceof ScalarNode) {
+					currentDomains.add(((ScalarNode) o).getValue());
+				}
+			}
+		}
+
+		boolean match = false;
+		boolean randomRemoved = false;
+		ScalarNode noHostNode = getNode(appNode, ApplicationManifestHandler.NO_HOSTNAME_PROP, ScalarNode.class);
+		ScalarNode randomRouteNode = getNode(appNode, ApplicationManifestHandler.RANDOM_ROUTE_PROP, ScalarNode.class);
+		ScalarNode noRouteNode = getNode(appNode, ApplicationManifestHandler.NO_ROUTE_PROP, ScalarNode.class);
+
+		if (otherNoRoute) {
+			if (noRouteNode == null || !String.valueOf(true).equals(noRouteNode.getValue())) {
+				me.addChild(createEdit(appNode, Boolean.TRUE, ApplicationManifestHandler.NO_ROUTE_PROP));
+
+				if (noHostNode != null) {
+					me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.NO_HOSTNAME_PROP));
+				}
+
+				if (randomRouteNode != null) {
+					randomRemoved = true;
+					me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.RANDOM_ROUTE_PROP));
+				}
+			} else {
+				match = true;
+			}
+		} else {
+			if (noRouteNode != null && String.valueOf(true).equals(noRouteNode.getValue())) {
+				me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.NO_ROUTE_PROP));
+			}
+
+			if (otherNoHostname) {
+				if (noHostNode == null || !String.valueOf(true).equals(noHostNode.getValue())) {
+					me.addChild(createEdit(appNode, Boolean.TRUE, ApplicationManifestHandler.NO_HOSTNAME_PROP));
+				}
+			} else {
+				if (noHostNode != null && String.valueOf(true).equals(noHostNode.getValue())) {
+					me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.NO_HOSTNAME_PROP));
+				}
+			}
+
+			if (randomRouteNode != null && otherHosts.size() == 1 && otherDomains.size() == 1
+					&& String.valueOf(true).equals(randomRouteNode.getValue())) {
+				match = true;
+			}
+
+			if (currentHosts.isEmpty() && !(noHostNode != null && String.valueOf(true).equals(noHostNode.getValue()))) {
+				currentHosts.add(getAppName());
+			}
+
+			if (currentDomains.isEmpty() && !domains.isEmpty()) {
+				currentDomains.add(domains.get(0).getName());
+			}
+		}
+
+		if (!match && (!currentHosts.equals(otherHosts) || !currentDomains.equals(otherDomains))) {
+			if (!randomRemoved && randomRouteNode != null) {
+				me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.RANDOM_ROUTE_PROP));
+			}
+
+			generateEditForHostsAndDomains(me, currentHosts, currentDomains, otherHosts, otherDomains);
+		}
+
 		return me.hasChildren() ? me : null;
+	}
+
+	private void generateEditForHostsAndDomains(MultiTextEdit me, Set<String> currentHosts, Set<String> currentDomains, Set<String> otherHosts, Set<String> otherDomains) {
+		TextEdit te = null;
+		ScalarNode n = null;
+
+		n = getNode(appNode, ApplicationManifestHandler.SUB_DOMAIN_PROP, ScalarNode.class);
+		if (otherHosts.size() == 1) {
+			String otherHost = otherHosts.iterator().next();
+			if (n == null || !otherHost.equals(n.getValue())) {
+				me.addChild(createEdit(appNode, otherHost, ApplicationManifestHandler.SUB_DOMAIN_PROP));
+			}
+			otherHosts.clear();
+		} else {
+			if (n != null && !otherHosts.remove(n.getValue())) {
+				me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.SUB_DOMAIN_PROP));
+			}
+		}
+		te = createEdit(appNode, new ArrayList<>(otherHosts), ApplicationManifestHandler.SUB_DOMAINS_PROP);
+		if (te != null) {
+			me.addChild(te);
+		}
+
+		n = getNode(appNode, ApplicationManifestHandler.DOMAIN_PROP, ScalarNode.class);
+		if (otherDomains.size() == 1) {
+			String otherDomain = otherDomains.iterator().next();
+			if (n == null || !otherDomain.equals(n.getValue())) {
+				me.addChild(createEdit(appNode, otherDomain,  ApplicationManifestHandler.DOMAIN_PROP));
+			}
+			otherDomains.clear();
+		} else {
+			if (n != null && !otherDomains.remove(n.getValue())) {
+				me.addChild(createEdit(appNode, (String) null, ApplicationManifestHandler.DOMAIN_PROP));
+			}
+		}
+		te = createEdit(appNode, new ArrayList<>(otherDomains), ApplicationManifestHandler.DOMAINS_PROP);
+		if (te != null) {
+			me.addChild(te);
+		}
+
 	}
 
 	/**
@@ -368,9 +480,9 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 		NodeTuple tuple = findNodeTuple(parent, property);
 		if (tuple == null) {
 			if (otherValue != null) {
-				StringBuilder serializedValue = serialize(property, otherValue, getDefaultOffset());
+				StringBuilder serializedValue = serialize(property, otherValue);
+				postIndent(serializedValue, getDefaultOffset());
 				int position = positionToAppendAt(parent);
-				addLineBreakToAppNodeIfNeeded(serializedValue, position);
 				return new ReplaceEdit(position, 0, serializedValue.toString());
 			}
 		} else {
@@ -380,16 +492,22 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				 */
 				int start = tuple.getKeyNode().getStartMark().getIndex();
 				int end = tuple.getValueNode().getEndMark().getIndex();
-				for (; start > 0 && Character.isWhitespace(content.charAt(start - 1)) && content.charAt(start - 1) != '\n'; start--);
-				for (; end > 0 && end < content.length() && Character.isWhitespace(content.charAt(end)) && content.charAt(end - 1) != '\n'; end++);
+//				int index = parent.getValue().indexOf(tuple);
+//				if (!(index > 0 && parent.getValue().get(index - 1).getValueNode() instanceof CollectionNode)) {
+//					/*
+//					 * If previous tuple is not a map or list then try to remove the preceding line break
+//					 */
+//					for (; start > 0 && Character.isWhitespace(content.charAt(start - 1)) && content.charAt(start - 1) != '\n'; start--);
+//				}
+				for (; end > 0 && end < content.length() && Character.isWhitespace(content.charAt(end))/* && content.charAt(end - 1) != '\n'*/; end++);
 				/*
 				 * HACK!
 				 * See if the tuple is first in the application mapping node and application is within application list.
 				 * In this case indent for the next value should jump up next to '-', which takes one char from the indent
 				 */
-				if ( applicationsValueNode != null && parent.getValue().get(0) == tuple) {
-					end++;
-				}
+//				if ( applicationsValueNode != null && parent.getValue().get(0) == tuple) {
+//					end++;
+//				}
 				return new DeleteEdit(start, end - start);
 //				return createDeleteEditIncludingLine(tuple.getKeyNode().getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex());
 			} else {
@@ -404,38 +522,47 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 	}
 
 	private int positionToAppendAt(MappingNode m) {
-		int index = m.getEndMark().getIndex();
-		/*
-		 * map
-		 *   entry: value
-		 * key: value
-		 * ^ - the end mark for Mapping node
-		 *
-		 * Therefore need to decrement position to skip the white space until the the first line break is found
-		 */
-		for (; index > 0 && Character.isWhitespace(content.charAt(index - 1)) && content.charAt(index - 1) != '\n'; index--);
-		return index;
+		if (m == appNode) {
+			for (NodeTuple tuple : m.getValue()) {
+				if (tuple.getKeyNode() instanceof ScalarNode && ApplicationManifestHandler.NAME_PROP.equals(((ScalarNode)tuple.getKeyNode()).getValue())) {
+					int index = tuple.getValueNode().getEndMark().getIndex();
+					for (; index > 0 && index < content.length() && Character.isWhitespace(content.charAt(index)); index++);
+					return index;
+				}
+			}
+		}
+		return m.getStartMark().getIndex();
 	}
 
 	private TextEdit createEdit(MappingNode parent, List<String> otherValue, String property) {
 		NodeTuple tuple = findNodeTuple(parent, property);
 		if (tuple == null) {
 			if (otherValue != null && !otherValue.isEmpty()) {
-				StringBuilder serializedValue = serialize(property, otherValue, getDefaultOffset());
+				StringBuilder serializedValue = serialize(property, otherValue);
+				postIndent(serializedValue, getDefaultOffset());
 				int position = positionToAppendAt(parent);
-				addLineBreakToAppNodeIfNeeded(serializedValue, position);
 				return new ReplaceEdit(position, 0, serializedValue.toString());
 			}
 		} else {
 			if (otherValue == null || otherValue.isEmpty()) {
-				// Deletion without including line works fine here
-				return new DeleteEdit(tuple.getKeyNode().getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex() - tuple.getKeyNode().getStartMark().getIndex());
+				int start = tuple.getKeyNode().getStartMark().getIndex();
+				int end = tuple.getValueNode().getEndMark().getIndex();
+//				int index = parent.getValue().indexOf(tuple);
+//				if (!(index > 0 && parent.getValue().get(index - 1).getValueNode() instanceof CollectionNode)) {
+//					/*
+//					 * If previous tuple is not a map or list then try to remove the preceding line break
+//					 */
+//					for (; start > 0 && Character.isWhitespace(content.charAt(start - 1)) && content.charAt(start - 1) != '\n'; start--);
+//				}
+				for (; end > 0 && end < content.length() && Character.isWhitespace(content.charAt(end)); end++);
+
+				return new DeleteEdit(start, end - start);
 			} else {
 				Node sequence = tuple.getKeyNode();
 				if (tuple.getValueNode() instanceof SequenceNode) {
 					SequenceNode sequenceValue = (SequenceNode) tuple.getValueNode();
 					MultiTextEdit me = new MultiTextEdit();
-					Set<String> others = new HashSet<>();
+					Set<String> others = new LinkedHashSet<>();
 					others.addAll(otherValue);
 
 					/*
@@ -486,9 +613,11 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 					 * whole tuple. Don't touch the whitespace when replacing -
 					 * it looks good
 					 */
+					StringBuilder s = serialize(property, otherValue);
+					preIndent(s, sequence.getStartMark().getColumn());
 					return createReplaceEditWithoutWhiteSpace(sequence.getStartMark().getIndex(),
 							tuple.getValueNode().getEndMark().getIndex() - 1,
-							serialize(property, otherValue, sequence.getStartMark().getColumn()).toString().trim());
+							s.toString().trim());
 				}
 			}
 		}
@@ -505,9 +634,9 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				/*
 				 * If other value is something that can be serialized, serialize the key and other value and put in the YAML
 				 */
-				StringBuilder serializedValue = serialize(property, otherValue, getDefaultOffset());
+				StringBuilder serializedValue = serialize(property, otherValue);
+				postIndent(serializedValue, getDefaultOffset());
 				int position = positionToAppendAt(parent);
-				addLineBreakToAppNodeIfNeeded(serializedValue, position);
 				return new ReplaceEdit(position, 0, serializedValue.toString());
 			}
 		} else {
@@ -518,7 +647,9 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 				/*
 				 * Delete the found tuple since other value is null or empty
 				 */
-				return new DeleteEdit(tuple.getKeyNode().getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex() - tuple.getKeyNode().getStartMark().getIndex());
+				int start = tuple.getKeyNode().getStartMark().getIndex();
+				int end = tuple.getValueNode().getEndMark().getIndex();
+				return new DeleteEdit(start, end - start);
 //				return createDeleteEditIncludingLine(tuple.getKeyNode().getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex());
 			} else {
 				/*
@@ -533,7 +664,7 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 					MultiTextEdit e = new MultiTextEdit();
 					Map<String, String> leftOver = new LinkedHashMap<>();
 					leftOver.putAll(otherValue);
-					int appendIndex = positionToAppendAt(mapValue);
+					int appendIndex = mapValue.getStartMark().getIndex();
 					for (NodeTuple t : mapValue.getValue()) {
 						if (t.getKeyNode() instanceof ScalarNode && t.getValueNode() instanceof ScalarNode) {
 							ScalarNode key = (ScalarNode) t.getKeyNode();
@@ -570,7 +701,8 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 					 * Add remaining unmatched entries
 					 */
 					for (Map.Entry<String, String> entry : leftOver.entrySet()) {
-						StringBuilder serializedValue = serialize(entry.getKey(), entry.getValue(), mapValue.getStartMark().getColumn());
+						StringBuilder serializedValue = serialize(entry.getKey(), entry.getValue());
+						preIndent(serializedValue, mapValue.getStartMark().getColumn());
 						e.addChild(new ReplaceEdit(appendIndex, 0, serializedValue.toString()));
 					}
 					return e.hasChildren() ? e : null;
@@ -580,32 +712,58 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 					 * whole tuple. Don't touch the whitespace when replacing -
 					 * it looks good
 					 */
-					return createReplaceEditWithoutWhiteSpace(map.getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex() - 1, serialize(property, otherValue, map.getStartMark().getColumn()).toString().trim());
+					StringBuilder serializedValue = serialize(property, otherValue);
+					preIndent(serializedValue, map.getStartMark().getColumn());
+					return createReplaceEditWithoutWhiteSpace(map.getStartMark().getIndex(), tuple.getValueNode().getEndMark().getIndex() - 1, serializedValue.toString().trim());
 				}
 			}
 		}
 		return null;
 	}
 
-	private StringBuilder serialize(String property, Object value, int offset) {
+	private StringBuilder serialize(String property, Object value) {
 		Map<Object, Object> obj = new HashMap<>();
 		obj.put(property, value);
-		StringBuilder s = new StringBuilder(yaml.dump(obj));
-		if (offset > 0) {
-			offsetString(s, offset);
+		return new StringBuilder(yaml.dump(obj));
+	}
+
+	private StringBuilder postIndent(StringBuilder s, int offset) {
+		char[] indent = new char[offset];
+		for (int i = 0; i < offset; i++) {
+			indent[i] = ' ';
+		}
+		for (int i = 0; i < s.length(); ) {
+			if (s.charAt(i) == '\n') {
+				s.insert(i + 1, indent);
+				i += indent.length;
+			}
+			i++;
 		}
 		return s;
 	}
+
+//	private StringBuilder serialize(String property, Object value, int offset) {
+//		Map<Object, Object> obj = new HashMap<>();
+//		obj.put(property, value);
+//		StringBuilder s = new StringBuilder(yaml.dump(obj));
+//		if (offset > 0) {
+////			offsetString(s, offset);
+//			for (int i = 0; i < offset; i++) {
+//				s.append(' ');
+//			}
+//		}
+//		return s;
+//	}
 
 	private StringBuilder serializeListEntry(Object obj, int offset) {
 		StringBuilder s = new StringBuilder(yaml.dump(Collections.singletonList(obj)));
 		if (offset > 0) {
-			offsetString(s, offset);
+			preIndent(s, offset);
 		}
 		return s;
 	}
 
-	private StringBuilder offsetString(StringBuilder s, int offset) {
+	private StringBuilder preIndent(StringBuilder s, int offset) {
 		char[] indent = new char[offset];
 		for (int i = 0; i < offset; i++) {
 			indent[i] = ' ';
@@ -664,8 +822,8 @@ public class YamlGraphDeploymentProperties implements DeploymentProperties {
 			return Collections.emptySet();
 		}
 
-		HashSet<String> hostsSet = new LinkedHashSet<>();
-		HashSet<String> domainsSet = new LinkedHashSet<>();
+		LinkedHashSet<String> hostsSet = new LinkedHashSet<>();
+		LinkedHashSet<String> domainsSet = new LinkedHashSet<>();
 
 		/*
 		 * Gather domains from app node from 'domain' and 'domains' attributes

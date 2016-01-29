@@ -1,6 +1,6 @@
 ---
 applications:
 - name: app
+  host: my-app
   memory: 2048M
-  host: test-app
   domain: springsource.org

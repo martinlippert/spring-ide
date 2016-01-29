@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -395,6 +396,8 @@ public class ApplicationManifestHandler {
 
 		Set<String> hosts = new LinkedHashSet<>();
 		Set<String> domains = new LinkedHashSet<>();
+
+		extractHostsAndDomains(properties.getUris(), cloudDomains, hosts, domains);
 		for (String uri : properties.getUris()) {
 			try {
 				// Find the first valid URL
@@ -431,6 +434,23 @@ public class ApplicationManifestHandler {
 		}
 
 		return deploymentInfoYaml;
+	}
+
+	public static void extractHostsAndDomains(Collection<String> uris, List<CloudDomain> cloudDomains, Set<String> hostsSet, Set<String> domainsSet) {
+		for (String uri : uris) {
+			try {
+				// Find the first valid URL
+				CloudApplicationURL cloudAppUrl = CloudApplicationURL.getCloudApplicationURL(uri, cloudDomains);
+				if (cloudAppUrl.getSubdomain() != null) {
+					hostsSet.add(cloudAppUrl.getSubdomain());
+				}
+				if (cloudAppUrl.getDomain() != null) {
+					domainsSet.add(cloudAppUrl.getDomain());
+				}
+			} catch (Exception e) {
+				// ignore
+			}
+		}
 	}
 
 	public void createFile(IProject project, IFile file, String data, IProgressMonitor monitor) throws CoreException {

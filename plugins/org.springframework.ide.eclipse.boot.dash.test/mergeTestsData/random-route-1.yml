@@ -2,5 +2,5 @@
 applications:
 - name: app
   memory: 2048M
-  host: test-app
+  random-route: true
   domain: springsource.org
