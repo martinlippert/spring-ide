@@ -77,6 +77,12 @@ public class TestProjectSetup {
 		assertEquals("project setup failed with exception: java.lang.ClassNotFoundException: org.springframework.ide.service.agent.AgentMain", response.get("status"));
 		assertEquals("TestProjectName", response.get("project-name"));
 		
+		assertTrue(response.has("execution-time"));
+		long time = response.getLong("execution-time");
+		assertTrue(time > 0);
+		
+		System.out.println("execution time: " + time);
+		
 		String error = resultErr.toString();
 		assertTrue(error.length() > 0);
 		assertTrue(error.contains("java.lang.ClassNotFoundException: org.springframework.ide.service.agent.AgentMain"));
@@ -109,8 +115,61 @@ public class TestProjectSetup {
 		assertEquals("project setup complete", response.get("status"));
 		assertEquals("TestProjectName", response.get("project-name"));
 		
+		assertTrue(response.has("execution-time"));
+		long time = response.getLong("execution-time");
+		assertTrue(time > 0);
+		
+		System.out.println("execution time: " + time);
+		
 		String error = resultErr.toString();
 		assertTrue(error.length() == 0);
 	}
 
+	@Test
+	public void testSimpleBootProject() throws Exception {
+		File parentDir = new File("").getAbsoluteFile().getParentFile();
+		File agentClassDir = new File(parentDir, "org.springframework.ide.service.agent/target/classes");
+		URL agentClasspath = agentClassDir.toURI().toURL();
+		
+		CommandExecuter executer = new CommandExecuter(pipedInputStream, backchannel, projectRegistry, new URL[] {agentClasspath});
+		executer.addCommand(new SetupProjectCommand());
+		executer.run();
+
+		String projectJAR = getProjectJAR("simple-spring-project", "0.0.1-SNAPSHOT");
+		
+		JSONObject setupMessage = new JSONObject();
+		setupMessage.put("command-name", "setup-project");
+		setupMessage.put("project-name", "TestProjectName");
+		setupMessage.put("project-classpath", projectJAR);
+		setupMessage.put("project-sourcepath", "");
+		setupMessage.put("spring-config-files", "");
+		
+		writer.println(setupMessage.toString());
+		writer.flush();
+		
+		Thread.sleep(1000);
+		
+		JSONObject response = new JSONObject(resultOut.toString());
+		assertTrue(response.has("status"));
+		assertEquals("project setup complete", response.get("status"));
+		assertEquals("TestProjectName", response.get("project-name"));
+		
+		assertTrue(response.has("execution-time"));
+		long time = response.getLong("execution-time");
+		assertTrue(time > 0);
+		
+		System.out.println("execution time: " + time);
+		
+		String error = resultErr.toString();
+		assertTrue(error.length() == 0);
+	}
+
+	/**
+	 * @param string
+	 * @return
+	 */
+	private String getProjectJAR(String projectName, String buildID) {
+		URL projectJAR = this.getClass().getClassLoader().getResource("projects/" + projectName + "/target/" + projectName + "-" + buildID + ".jar");
+		return projectJAR.toString();
+	}
 }

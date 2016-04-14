@@ -31,6 +31,8 @@ public class SetupProjectCommand implements Command {
 
 	@Override
 	public void run(JSONObject command, ProjectRegistry projectRegistry, URL[] agentClasspath, BackChannel backchannel) {
+		long startTime = System.currentTimeMillis();
+		
 		String projectName = (String) command.get("project-name");
 		String classpath = (String) command.get("project-classpath");
 		String sourcepath = (String) command.get("project-sourcepath");
@@ -42,24 +44,33 @@ public class SetupProjectCommand implements Command {
 			
 			try {
 				projectSetup.start();
+				
+				long endTime = System.currentTimeMillis();
 			
 				JSONObject response = new JSONObject();
 				response.put("status", "project setup complete");
 				response.put("project-name", projectName);
+				response.put("execution-time", (endTime - startTime));
 				backchannel.sendMessage(response.toString());
 			}
 			catch (Exception e) {
+				long endTime = System.currentTimeMillis();
+
 				JSONObject response = new JSONObject();
 				response.put("status", "project setup failed with exception: " + e.toString());
 				response.put("project-name", projectName);
+				response.put("execution-time", (endTime - startTime));
 				backchannel.sendMessage(response.toString());
 				backchannel.sendException(e);
 			}
 		}
 		else {
+			long endTime = System.currentTimeMillis();
+
 			JSONObject response = new JSONObject();
 			response.put("status", "project already exists");
 			response.put("project-name", projectName);
+			response.put("execution-time", (endTime - startTime));
 			backchannel.sendMessage(response.toString());
 		}
 	}
