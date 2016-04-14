@@ -40,10 +40,27 @@ public class SetupProjectCommand implements Command {
 			Project project = new Project(projectName, classpath, sourcepath, springConfigFiles, agentClasspath);
 			ProjectSetup projectSetup = new ProjectSetup(project, backchannel);
 			
-			projectSetup.start();
+			try {
+				projectSetup.start();
+			
+				JSONObject response = new JSONObject();
+				response.put("status", "project setup complete");
+				response.put("project-name", projectName);
+				backchannel.sendMessage(response.toString());
+			}
+			catch (Exception e) {
+				JSONObject response = new JSONObject();
+				response.put("status", "project setup failed with exception: " + e.toString());
+				response.put("project-name", projectName);
+				backchannel.sendMessage(response.toString());
+				backchannel.sendException(e);
+			}
 		}
 		else {
-			// TODO report error
+			JSONObject response = new JSONObject();
+			response.put("status", "project already exists");
+			response.put("project-name", projectName);
+			backchannel.sendMessage(response.toString());
 		}
 	}
 

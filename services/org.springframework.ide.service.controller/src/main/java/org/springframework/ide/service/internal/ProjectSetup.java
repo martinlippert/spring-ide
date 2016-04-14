@@ -42,19 +42,14 @@ public class ProjectSetup {
 		return this.project.getProjectName();
 	}
 	
-	public void start() {
+	public void start() throws Exception {
 		libLoader = new URLClassLoader(this.project.getClasspath(), this.getClass().getClassLoader());
 		sourceLoader = new URLClassLoader(this.project.getSourcepath(), libLoader);
 		agentLoader = new URLClassLoader(this.project.getAgentClasspath(), sourceLoader);
 		
-		try {
-			agentMainClass = agentLoader.loadClass(AGENT_MAIN_CLASS);
-			Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
-			agentMainMethod.invoke(null, this.project.getProjectName(), (Object[]) this.project.getSpringConfigFiles(), backchannel);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+		agentMainClass = agentLoader.loadClass(AGENT_MAIN_CLASS);
+		Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
+		agentMainMethod.invoke(null, this.project.getProjectName(), (Object[]) this.project.getSpringConfigFiles(), backchannel);
 	}
 
 }

@@ -11,6 +11,7 @@
 package org.springframework.ide.service.controller.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PipedInputStream;
@@ -19,6 +20,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
 
+import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.ide.service.commands.PingCommand;
 import org.springframework.ide.service.controller.BackChannel;
@@ -28,20 +31,31 @@ import org.springframework.ide.service.internal.ProjectRegistry;
 /**
  * @author Martin Lippert
  */
-public class TestCommandExecuter {
+public class TestSimplePingCommand {
 
-	@Test
-	public void testBasicPingPongInteraction() throws Exception {
-		ByteArrayOutputStream resultOut = new ByteArrayOutputStream();
-		ByteArrayOutputStream resultErr = new ByteArrayOutputStream();
+	private ByteArrayOutputStream resultOut;
+	private ByteArrayOutputStream resultErr;
+	private BackChannel backchannel;
+	private ProjectRegistry projectRegistry;
+	private PrintWriter writer;
+	private PipedInputStream pipedInputStream;
+
+	@Before
+	public void setup() throws Exception {
+		resultOut = new ByteArrayOutputStream();
+		resultErr = new ByteArrayOutputStream();
 		
-		BackChannel backchannel = new BackChannel(new PrintStream(resultOut), new PrintStream(resultErr));
-		ProjectRegistry projectRegistry = new ProjectRegistry();
+		backchannel = new BackChannel(new PrintStream(resultOut), new PrintStream(resultErr));
+		projectRegistry = new ProjectRegistry();
 
 		PipedOutputStream pipe = new PipedOutputStream();
-		PrintWriter writer = new PrintWriter(pipe, true);
+		pipedInputStream = new PipedInputStream(pipe);		
+		writer = new PrintWriter(pipe, true);
+	}
 
-		CommandExecuter executer = new CommandExecuter(new PipedInputStream(pipe), backchannel, projectRegistry, new URL[0]);
+	@Test
+	public void testSimpleEmptyProjectSetup() throws Exception {
+		CommandExecuter executer = new CommandExecuter(pipedInputStream, backchannel, projectRegistry, new URL[0]);
 		executer.addCommand(new PingCommand());
 		executer.run();
 		
@@ -50,8 +64,9 @@ public class TestCommandExecuter {
 		
 		Thread.sleep(1000);
 		
-		String pingResult = resultOut.toString();
-		assertEquals("{'pong' : pong}\n", pingResult);
+		JSONObject response = new JSONObject(resultOut.toString());
+		assertTrue(response.has("pong"));
+		assertEquals("pong", response.get("pong"));
 	}
 
 }
