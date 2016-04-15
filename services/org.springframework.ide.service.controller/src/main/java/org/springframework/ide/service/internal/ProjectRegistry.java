@@ -26,7 +26,7 @@ public class ProjectRegistry {
 	
 	public void add(ProjectSetup projectSetup) {
 		ProjectSetup addedProjectSetup = this.projects.putIfAbsent(projectSetup.getProjectName(), projectSetup);
-		if (projectSetup != addedProjectSetup) {
+		if (addedProjectSetup != null && addedProjectSetup != projectSetup) {
 			throw new RuntimeException("project already exists");
 		}
 	}

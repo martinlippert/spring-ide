@@ -35,7 +35,7 @@ public class BackChannel {
 	 * @param error The message as a JSON formatted string
 	 */
 	public void sendMessage(String message) {
-		this.out.println(message);
+		this.out.print(message);
 		this.out.flush();
 	}
 	
@@ -45,7 +45,7 @@ public class BackChannel {
 	 * @param error The error as general String
 	 */
 	public void sendError(String error) {
-		this.err.println(error);
+		this.err.print(error);
 		this.err.flush();
 	}
 
@@ -55,7 +55,7 @@ public class BackChannel {
 	 * @param error The exception to send
 	 */
 	public void sendException(Exception exception) {
-		this.err.println(exception.getMessage());
+		this.err.print(exception.getMessage());
 		exception.printStackTrace(this.err);
 		this.err.flush();
 	}

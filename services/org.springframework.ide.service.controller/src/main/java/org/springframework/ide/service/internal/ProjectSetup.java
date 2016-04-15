@@ -11,7 +11,6 @@
 package org.springframework.ide.service.internal;
 
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.net.URLClassLoader;
 
 import org.springframework.ide.service.controller.BackChannel;
@@ -23,7 +22,7 @@ public class ProjectSetup {
 	
 	private static final String AGENT_MAIN_CLASS = "org.springframework.ide.service.agent.AgentMain";
 	private static final String AGENT_MAIN_METHOD = "main";
-	private static final Class<?>[] AGENT_MAIN_PARAMETERS = new Class<?>[] {String.class, URL[].class, Object.class};
+	private static final Class<?>[] AGENT_MAIN_PARAMETERS = new Class<?>[] {String.class, String[].class, Object.class};
 	
 	private final Project project;
 	
@@ -49,7 +48,7 @@ public class ProjectSetup {
 		
 		agentMainClass = agentLoader.loadClass(AGENT_MAIN_CLASS);
 		Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
-		agentMainMethod.invoke(null, this.project.getProjectName(), (Object[]) this.project.getSpringConfigFiles(), backchannel);
+		agentMainMethod.invoke(null, this.project.getProjectName(), (String[]) this.project.getSpringConfigFiles(), backchannel);
 	}
 
 }

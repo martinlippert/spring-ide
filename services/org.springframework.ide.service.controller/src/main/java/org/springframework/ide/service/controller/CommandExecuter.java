@@ -72,10 +72,15 @@ public class CommandExecuter {
 							executeCommand(command, message);
 						}
 						else {
-							System.err.println("unknown command received: " + message.toString());
+							JSONObject errorMessage = new JSONObject();
+							errorMessage.put("status", "command unknown: " + commandName);
+							backchannel.sendError(errorMessage.toString());
 						}
 					} catch (JSONException e) {
-						e.printStackTrace(System.err);
+						JSONObject errorMessage = new JSONObject();
+						errorMessage.put("status", "error parsing JSON message: " + e.toString());
+						backchannel.sendError(errorMessage.toString());
+						backchannel.sendException(e);
 					}
 				}
 			}

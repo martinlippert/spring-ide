@@ -43,6 +43,7 @@ public class SetupProjectCommand implements Command {
 			ProjectSetup projectSetup = new ProjectSetup(project, backchannel);
 			
 			try {
+				projectRegistry.add(projectSetup);
 				projectSetup.start();
 				
 				long endTime = System.currentTimeMillis();

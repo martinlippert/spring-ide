@@ -10,14 +10,12 @@
  *******************************************************************************/
 package org.springframework.ide.service.agent;
 
-import java.net.URL;
-
 /**
  * @author Martin Lippert
  */
 public class AgentMain {
 	
-	public static void main(String projectName, URL[] configFiles, Object backChannel) {
+	public static void main(String projectName, String[] configFiles, Object backChannel) {
 	}
 
 }

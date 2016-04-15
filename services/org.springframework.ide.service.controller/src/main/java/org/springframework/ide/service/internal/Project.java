@@ -24,7 +24,7 @@ public class Project {
 	private final String projectName;
 	private final URL[] classpath;
 	private final URL[] sourcepath;
-	private final URL[] springConfigFiles;
+	private final String[] springConfigFiles;
 	private final URL[] agentClasspath;
 
 	/**
@@ -41,7 +41,7 @@ public class Project {
 		this.agentClasspath = agentClasspath;
 		this.classpath = parseURLs(classpath);
 		this.sourcepath = parseURLs(sourcepath);
-		this.springConfigFiles = parseURLs(springConfigFiles);
+		this.springConfigFiles = parseStrings(springConfigFiles);
 	}
 	
 	public String getProjectName() {
@@ -56,7 +56,7 @@ public class Project {
 		return sourcepath;
 	}
 	
-	public URL[] getSpringConfigFiles() {
+	public String[] getSpringConfigFiles() {
 		return springConfigFiles;
 	}
 
@@ -77,6 +77,16 @@ public class Project {
 			}
 		}
 		return (URL[]) urls.toArray(new URL[urls.size()]);
+	}
+
+	private String[] parseStrings(String stringSequence) {
+		StringTokenizer tokens =  new StringTokenizer(stringSequence, ";");
+		List<String> result = new ArrayList<>();
+		while (tokens.hasMoreTokens()) {
+			String nextToken = tokens.nextToken();
+			result.add(nextToken);
+		}
+		return (String[]) result.toArray(new String[result.size()]);
 	}
 
 }
