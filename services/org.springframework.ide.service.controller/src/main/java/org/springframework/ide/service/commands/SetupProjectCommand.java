@@ -45,6 +45,7 @@ public class SetupProjectCommand implements Command {
 			try {
 				projectRegistry.add(projectSetup);
 				projectSetup.start();
+				projectSetup.createModel();
 				
 				long endTime = System.currentTimeMillis();
 			
@@ -56,6 +57,8 @@ public class SetupProjectCommand implements Command {
 			}
 			catch (Exception e) {
 				long endTime = System.currentTimeMillis();
+				
+				e.printStackTrace();
 
 				JSONObject response = new JSONObject();
 				response.put("status", "project setup failed with exception: " + e.toString());

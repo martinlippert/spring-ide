@@ -13,18 +13,11 @@ package org.springframework.ide.service.agent;
 /**
  * @author Martin Lippert
  */
-public class AgentMain {
+public interface ConfigurationRoot {
+	
+	static String JAVA_CONFIG_ROOT_PREFIX = "java:";
+	static String XML_CONFIG_ROOT_PREFIX = "xml:";
 
-	public static BackChannel backchannel;
-	public static ModelCreator modelCreator;
-	
-	public static void main(String projectName, String[] configFiles, Object backChannel) {
-		backchannel = new BackChannel(backChannel);
-		modelCreator = new ModelCreator(projectName, configFiles, backchannel);
-	}
-	
-	public static void createModel() {
-		modelCreator.createModel();
-	}
+	void createModel();
 
 }

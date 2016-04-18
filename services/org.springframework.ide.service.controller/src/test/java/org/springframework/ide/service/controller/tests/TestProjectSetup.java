@@ -189,12 +189,13 @@ public class TestProjectSetup {
 		executer.run();
 
 		String projectJAR = getProjectJAR("simple-spring-project", "0.0.1-SNAPSHOT");
+		String projectClasspath = getProjectClasspath("simple-spring-project");
 		
 		JSONObject setupMessage = new JSONObject();
 		setupMessage.put("command-name", "setup-project");
 		setupMessage.put("project-name", "TestProjectName");
-		setupMessage.put("project-classpath", projectJAR);
-		setupMessage.put("project-sourcepath", "");
+		setupMessage.put("project-classpath", projectClasspath);
+		setupMessage.put("project-sourcepath", projectJAR);
 		setupMessage.put("spring-config-files", "java:com.example.SimpleSpringProjectApplication");
 		
 		writer.print(setupMessage.toString());
@@ -232,4 +233,22 @@ public class TestProjectSetup {
 		URL projectJAR = this.getClass().getClassLoader().getResource("projects/" + projectName + "/target/" + projectName + "-" + buildID + ".jar");
 		return projectJAR.toString();
 	}
+	
+	private String getProjectClasspath(String projectName) throws Exception {
+		StringBuilder result = new StringBuilder();
+
+		URL projectLibs = this.getClass().getClassLoader().getResource("projects/" + projectName + "/target/libs");
+		
+		File libDir = new File(projectLibs.toURI());
+		File[] libs = libDir.listFiles();
+		for (int i = 0; i < libs.length; i++) {
+			result.append(libs[i].toURI().toURL().toString());
+			if (i < libs.length - 1) {
+				result.append(";");
+			}
+		}
+
+		return result.toString();
+	}
+
 }

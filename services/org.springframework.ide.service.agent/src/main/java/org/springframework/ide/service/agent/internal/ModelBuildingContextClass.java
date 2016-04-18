@@ -8,23 +8,20 @@
  * Contributors:
  *     Pivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.springframework.ide.service.agent;
+package org.springframework.ide.service.agent.internal;
+
+import org.springframework.beans.BeansException;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
  * @author Martin Lippert
  */
-public class AgentMain {
-
-	public static BackChannel backchannel;
-	public static ModelCreator modelCreator;
+public class ModelBuildingContextClass extends AnnotationConfigApplicationContext {
 	
-	public static void main(String projectName, String[] configFiles, Object backChannel) {
-		backchannel = new BackChannel(backChannel);
-		modelCreator = new ModelCreator(projectName, configFiles, backchannel);
+	@Override
+	public void refresh() throws BeansException, IllegalStateException {
+		prepareRefresh();
+		System.out.println(" TO THE SUPER REFRESH !!!!!!!!!!!");
 	}
 	
-	public static void createModel() {
-		modelCreator.createModel();
-	}
-
 }

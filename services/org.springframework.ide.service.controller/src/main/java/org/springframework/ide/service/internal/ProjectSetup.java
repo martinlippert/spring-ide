@@ -21,8 +21,12 @@ import org.springframework.ide.service.controller.BackChannel;
 public class ProjectSetup {
 	
 	private static final String AGENT_MAIN_CLASS = "org.springframework.ide.service.agent.AgentMain";
+	
 	private static final String AGENT_MAIN_METHOD = "main";
 	private static final Class<?>[] AGENT_MAIN_PARAMETERS = new Class<?>[] {String.class, String[].class, Object.class};
+
+	private static final String AGENT_CREATE_MODEL_METHOD = "createModel";
+	private static final Class<?>[] AGENT_CREATE_MODEL_PARAMETERS = new Class<?>[] {};
 	
 	private final Project project;
 	
@@ -49,6 +53,11 @@ public class ProjectSetup {
 		agentMainClass = agentLoader.loadClass(AGENT_MAIN_CLASS);
 		Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
 		agentMainMethod.invoke(null, this.project.getProjectName(), (String[]) this.project.getSpringConfigFiles(), backchannel);
+	}
+
+	public void createModel() throws Exception {
+		Method createModelMethod = agentMainClass.getMethod(AGENT_CREATE_MODEL_METHOD, AGENT_CREATE_MODEL_PARAMETERS);
+		createModelMethod.invoke(null,  new Object[] {});
 	}
 
 }
