@@ -20,6 +20,11 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -39,7 +44,7 @@ public class TestProjectSetup {
 	/**
 	 * response timeout in ms
 	 */
-	private static final int TIMEOUT = 1000;
+	private static final int TIMEOUT = 100000;
 
 	private ByteArrayOutputStream resultErr;
 	private BackChannel backchannel;
@@ -50,6 +55,8 @@ public class TestProjectSetup {
 
 	private PipedInputStream pipedInputStream;
 	private PipedOutputStream pipedOutputStream;
+
+	private ExecutorService executor;
 
 	@Before
 	public void setup() throws Exception {
@@ -65,6 +72,8 @@ public class TestProjectSetup {
 
 		backchannel = new BackChannel(new PrintStream(pipedOutputStream), new PrintStream(resultErr));
 		projectRegistry = new ProjectRegistry();
+		
+		executor = Executors.newFixedThreadPool(1);
 	}
 
 	@Test
@@ -83,9 +92,7 @@ public class TestProjectSetup {
 		writer.print(setupMessage.toString());
 		writer.flush();
 		
-		Thread.sleep(TIMEOUT);
-		
-		JSONObject response = new JSONObject(jsonResponseParser);
+		JSONObject response = waitForMessage(jsonResponseParser);
 		assertTrue(response.has("status"));
 		assertEquals("project setup failed with exception: java.lang.ClassNotFoundException: org.springframework.ide.service.agent.AgentMain", response.get("status"));
 		assertEquals("TestProjectName", response.get("project-name"));
@@ -121,9 +128,7 @@ public class TestProjectSetup {
 		writer.print(setupMessage.toString());
 		writer.flush();
 		
-		Thread.sleep(TIMEOUT);
-		
-		JSONObject response = new JSONObject(jsonResponseParser);
+		JSONObject response = waitForMessage(jsonResponseParser);
 		assertTrue(response.has("status"));
 		assertEquals("project setup complete", response.get("status"));
 		assertEquals("TestProjectName", response.get("project-name"));
@@ -160,9 +165,7 @@ public class TestProjectSetup {
 		writer.print(setupMessage.toString());
 		writer.flush();
 		
-		Thread.sleep(TIMEOUT);
-		
-		JSONObject response = new JSONObject(jsonResponseParser);
+		JSONObject response = waitForMessage(jsonResponseParser);
 		assertTrue(response.has("status"));
 		assertEquals("project setup complete", response.get("status"));
 		assertEquals("TestProjectName", response.get("project-name"));
@@ -201,8 +204,11 @@ public class TestProjectSetup {
 		writer.print(setupMessage.toString());
 		writer.flush();
 		
-		Thread.sleep(TIMEOUT);
-
+		JSONObject setupresponse = waitForMessage(jsonResponseParser);
+		assertTrue(setupresponse.has("status"));
+		assertEquals("project setup complete", setupresponse.get("status"));
+		assertEquals("TestProjectName", setupresponse.get("project-name"));
+		
 		JSONObject getModelMessage = new JSONObject();
 		getModelMessage.put("command-name", "get-full-model");
 		getModelMessage.put("project-name", "TestProjectName");
@@ -211,14 +217,7 @@ public class TestProjectSetup {
 		writer.print(getModelMessage.toString());
 		writer.flush();
 		
-		Thread.sleep(TIMEOUT);
-		
-		JSONObject setupresponse = new JSONObject(jsonResponseParser);
-		assertTrue(setupresponse.has("status"));
-		assertEquals("project setup complete", setupresponse.get("status"));
-		assertEquals("TestProjectName", setupresponse.get("project-name"));
-		
-		JSONObject modelresponse = new JSONObject(jsonResponseParser);
+		JSONObject modelresponse = waitForMessage(jsonResponseParser);
 		assertEquals("TestProjectName", modelresponse.get("project-name"));
 		assertTrue(modelresponse.has("spring-model"));
 		JSONObject model = (JSONObject) modelresponse.get("spring-model");
@@ -249,6 +248,17 @@ public class TestProjectSetup {
 		}
 
 		return result.toString();
+	}
+	
+	protected JSONObject waitForMessage(final JSONTokener parser) throws Exception {
+		Future<JSONObject> task = executor.submit(new Callable<JSONObject>() {
+			@Override
+			public JSONObject call() throws Exception {
+				return new JSONObject(parser);
+			}
+		});
+		
+		return task.get(TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
 }
