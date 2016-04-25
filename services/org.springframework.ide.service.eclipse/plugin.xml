@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="springBuilderService"
+         name="Spring Builder Service"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="org.springframework.ide.service.eclipse.builder.SpringBuilderService">
+         </run>
+      </builder>
+   </extension>
+   
+   <extension
+         id="sampleNature"
+         name="Spring Boot Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="org.springframework.ide.service.eclipse.builder.SpringBootNature">
+         </run>
+      </runtime>
+      <builder
+            id="org.springframework.ide.service.eclipse.springBuilderService">
+      </builder>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Spring Boot Nature commands"
+            id="org.springframework.ide.service.eclipse.springBootNature.category">
+      </category>
+      <command
+            name="Add/Remove Spring Boot Nature"
+            defaultHandler="org.springframework.ide.service.eclipse.builder.AddRemoveSpringBootNatureHandler"
+            categoryId="org.springframework.ide.service.eclipse.springBootNature.category"
+            id="org.springframework.ide.service.eclipse.addRemoveSpringBootNature">
+      </command>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.projectConfigure?after=additions">
+         <command
+               commandId="org.springframework.ide.service.eclipse.addRemoveSpringBootNature"
+               label="Disable Spring Boot builder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <test
+                              value="org.springframework.ide.service.eclipse.springBootNature"
+                              property="org.eclipse.core.resources.projectNature">
+                        </test>
+                     </adapt>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.springframework.ide.service.eclipse.addRemoveSampleNature"
+               label="Enable Spring Boot builder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <not>
+                           <test
+                                 value="org.springframework.ide.service.eclipse.springBootNature"
+                                 property="org.eclipse.core.resources.projectNature">
+                           </test>
+                        </not>
+                     </adapt>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+   
+   <extension
+         id="xmlProblem"
+         name="XML Problem"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+   </extension>
+
+</plugin>
