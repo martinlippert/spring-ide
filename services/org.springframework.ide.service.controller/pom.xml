@@ -4,7 +4,7 @@
 
 	<groupId>org.springframework.ide.eclipse</groupId>
 	<artifactId>org.springframework.ide.eclipse.service.controller</artifactId>
-	<version>3.8.0-SNAPSHOT</version>
+	<version>4.0.0-SNAPSHOT</version>
 	<name>Service Process Controller</name>
 
 	<dependencies>
