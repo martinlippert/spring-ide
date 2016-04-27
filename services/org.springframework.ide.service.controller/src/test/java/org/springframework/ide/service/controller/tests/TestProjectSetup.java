@@ -153,7 +153,7 @@ public class TestProjectSetup {
 		executer.addCommand(new SetupProjectCommand());
 		executer.run();
 
-		String projectJAR = getProjectJAR("simple-spring-project", "0.0.1-SNAPSHOT");
+		String projectJAR = getProjectJAR("simple-spring-project");
 		
 		JSONObject setupMessage = new JSONObject();
 		setupMessage.put("command-name", "setup-project");
@@ -191,7 +191,7 @@ public class TestProjectSetup {
 		executer.addCommand(new GetFullModelCommand());
 		executer.run();
 
-		String projectJAR = getProjectJAR("simple-spring-project", "0.0.1-SNAPSHOT");
+		String projectJAR = getProjectJAR("simple-spring-project");
 		String projectClasspath = getProjectClasspath("simple-spring-project");
 		
 		JSONObject setupMessage = new JSONObject();
@@ -228,8 +228,8 @@ public class TestProjectSetup {
 		assertTrue(error.length() == 0);
 	}
 
-	private String getProjectJAR(String projectName, String buildID) {
-		URL projectJAR = this.getClass().getClassLoader().getResource("projects/" + projectName + "/target/" + projectName + "-" + buildID + ".jar");
+	private String getProjectJAR(String projectName) {
+		URL projectJAR = this.getClass().getClassLoader().getResource("projects/" + projectName + "/target/classes/");
 		return projectJAR.toString();
 	}
 	

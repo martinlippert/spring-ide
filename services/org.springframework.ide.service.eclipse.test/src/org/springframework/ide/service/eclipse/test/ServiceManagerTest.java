@@ -14,16 +14,21 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.ide.service.eclipse.Activator;
-import org.springframework.ide.service.eclipse.process.IServiceManager;
-import org.springframework.ide.service.eclipse.process.ServiceConfiguration;
+import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
+import org.springframework.ide.service.eclipse.process.ServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
+import org.springframework.ide.service.eclipse.process.ServiceProcessConfiguration;
 
 /**
  * @author Martin Lippert
@@ -31,6 +36,7 @@ import org.springframework.ide.service.eclipse.process.ServiceProcess;
 public class ServiceManagerTest {
 	
 	private IProject project;
+	private IVMInstall jdk;
 
 
 	@Before
@@ -38,6 +44,8 @@ public class ServiceManagerTest {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		project = root.getProject("sampleProject");
 		project.create(null);
+		
+		jdk = getJDK();
 	}
 	
 	@After
@@ -47,27 +55,33 @@ public class ServiceManagerTest {
 
 	@Test
 	public void testNoExternalServiceProcess() throws Exception {
-		IServiceManager manager = Activator.getDefault().getServiceManager();
+		ServiceManager manager = Activator.getDefault().getServiceManager();
 		
-		ServiceConfiguration serviceConfig = new ServiceConfiguration(project, "root");
-		assertFalse(manager.isServiceRunning(serviceConfig));
+		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, "randomargs", new EnvironmentConfiguration());
+		assertFalse(manager.isServiceProcessRunning(processConfig));
 	}
 	
 	@Test
 	public void testStartStopExternalProcess() throws Exception {
-		IServiceManager manager = Activator.getDefault().getServiceManager();
+		ServiceManager manager = Activator.getDefault().getServiceManager();
 		
-		ServiceConfiguration serviceConfig = new ServiceConfiguration(project, "root");
-		manager.startService(serviceConfig);
-		assertTrue(manager.isServiceRunning(serviceConfig));
-		ServiceProcess serviceProcess = manager.getServiceProcess(serviceConfig);
+		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, "randomargs", new EnvironmentConfiguration());
+		manager.startServiceProcess(processConfig);
+		assertTrue(manager.isServiceProcessRunning(processConfig));
+		ServiceProcess serviceProcess = manager.getServiceProcess(processConfig);
 
 		assertNotNull(serviceProcess);
 		assertTrue(serviceProcess.isAlive());
 		
-		manager.stopService(serviceConfig);
-		assertFalse(manager.isServiceRunning(serviceConfig));
+		manager.stopServiceProcess(processConfig);
+		assertFalse(manager.isServiceProcessRunning(processConfig));
+		
+		serviceProcess.getInternalProcess().waitFor(500, TimeUnit.MILLISECONDS);
 		assertFalse(serviceProcess.isAlive());
 	}
 
+	private IVMInstall getJDK() {
+		return JavaRuntime.getDefaultVMInstall();
+	}
+	
 }

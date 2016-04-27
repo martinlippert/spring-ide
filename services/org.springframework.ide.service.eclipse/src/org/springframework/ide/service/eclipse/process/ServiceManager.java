@@ -16,46 +16,41 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Martin Lippert
  */
-public class ServiceManager implements IServiceManager {
+public class ServiceManager {
 	
-	private Map<ServiceConfiguration, ServiceProcess> services;
+	private Map<ServiceProcessConfiguration, ServiceProcess> services;
 	
 	public ServiceManager() {
 		this.services = new ConcurrentHashMap<>();
 	}
 
-	@Override
-	public void startService(ServiceConfiguration serviceConfig) {
-		ServiceProcess process = services.get(serviceConfig);
+	public void startServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
+		ServiceProcess process = services.get(processConfig);
 		if (process != null) {
 			process.kill();
 		}
 		
-		ServiceProcess newProcess = ServiceProcessBuilder.createServiceProcess(serviceConfig);
-		this.services.put(serviceConfig, newProcess);
+		ServiceProcess newProcess = ServiceProcessFactory.createServiceProcess(processConfig);
+		this.services.put(processConfig, newProcess);
 	}
 
-	@Override
-	public void stopService(ServiceConfiguration serviceConfig) {
-		ServiceProcess process = services.get(serviceConfig);
+	public void stopServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
+		ServiceProcess process = services.get(processConfig);
 		if (process != null) {
 			process.kill();
-			services.remove(serviceConfig);
+			services.remove(processConfig);
 		}
 	}
 
-	@Override
-	public boolean isServiceRunning(ServiceConfiguration serviceConfig) {
-		ServiceProcess process = services.get(serviceConfig);
+	public boolean isServiceProcessRunning(ServiceProcessConfiguration processConfig) {
+		ServiceProcess process = services.get(processConfig);
 		return process != null && process.isAlive();
 	}
 	
-	@Override
-	public ServiceProcess getServiceProcess(ServiceConfiguration serviceConfiguration) {
-		return services.get(serviceConfiguration);
+	public ServiceProcess getServiceProcess(ServiceProcessConfiguration processConfiguration) {
+		return services.get(processConfiguration);
 	}
 
-	@Override
 	public ServiceProcess[] getServiceProcesses() {
 		return this.services.values().toArray(new ServiceProcess[this.services.size()]);
 	}

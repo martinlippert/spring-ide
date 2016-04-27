@@ -19,10 +19,12 @@ public class ServiceConfiguration {
 	
 	private final IProject project;
 	private final String configRoot;
+	private final ServiceProcessConfiguration processConfig;
 
-	public ServiceConfiguration(IProject project, String configRoot) {
+	public ServiceConfiguration(IProject project, String configRoot, ServiceProcessConfiguration processConfig) {
 		this.project = project;
 		this.configRoot = configRoot;
+		this.processConfig = processConfig;
 	}
 	
 	public IProject getProject() {
@@ -34,17 +36,16 @@ public class ServiceConfiguration {
 	}
 
 	@Override
-	// generated
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((configRoot == null) ? 0 : configRoot.hashCode());
-		result = prime * result + ((project == null) ? 0 : project.getName().hashCode());
+		result = prime * result + ((processConfig == null) ? 0 : processConfig.hashCode());
+		result = prime * result + ((project == null) ? 0 : project.hashCode());
 		return result;
 	}
 
 	@Override
-	// generated
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
@@ -58,10 +59,15 @@ public class ServiceConfiguration {
 				return false;
 		} else if (!configRoot.equals(other.configRoot))
 			return false;
+		if (processConfig == null) {
+			if (other.processConfig != null)
+				return false;
+		} else if (!processConfig.equals(other.processConfig))
+			return false;
 		if (project == null) {
 			if (other.project != null)
 				return false;
-		} else if (!project.getName().equals(other.project.getName()))
+		} else if (!project.equals(other.project))
 			return false;
 		return true;
 	}

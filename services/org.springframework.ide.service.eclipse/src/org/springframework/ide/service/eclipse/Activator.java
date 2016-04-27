@@ -13,7 +13,6 @@ package org.springframework.ide.service.eclipse;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
-import org.springframework.ide.service.eclipse.process.IServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceManager;
 
 public class Activator extends AbstractUIPlugin {
@@ -21,7 +20,7 @@ public class Activator extends AbstractUIPlugin {
 	public static final String PLUGIN_ID = "org.springframework.ide.service.eclipse"; //$NON-NLS-1$
 	private static Activator plugin;
 	
-	private final IServiceManager serviceManager;
+	private final ServiceManager serviceManager;
 	
 	public Activator() {
 		this.serviceManager = new ServiceManager();
@@ -45,7 +44,7 @@ public class Activator extends AbstractUIPlugin {
 		return imageDescriptorFromPlugin(PLUGIN_ID, path);
 	}
 	
-	public IServiceManager getServiceManager() {
+	public ServiceManager getServiceManager() {
 		return this.serviceManager;
 	}
 }

@@ -15,12 +15,19 @@ package org.springframework.ide.service.eclipse.process;
  */
 public class ServiceProcess {
 
-	private Process serviceProcess;
-	private SpringTooling toolingService;
+	private final Process serviceProcess;
+	private final ServiceProcessConfiguration processConfiguration;
 
-	public ServiceProcess(Process serviceProcess) {
+	private SpringToolingService toolingService;
+
+	public ServiceProcess(Process serviceProcess, ServiceProcessConfiguration processConfiguration) {
 		this.serviceProcess = serviceProcess;
+		this.processConfiguration = processConfiguration;
 		this.toolingService = null;
+	}
+	
+	public ServiceProcessConfiguration getProcessConfiguration() {
+		return processConfiguration;
 	}
 
 	public boolean isAlive() {
@@ -34,12 +41,16 @@ public class ServiceProcess {
 		}
 	}
 
-	public SpringTooling connectTo(ServiceConfiguration serviceConfiguration) {
+	public SpringToolingService connectTo(ServiceConfiguration serviceConfiguration) {
 		if (toolingService != null) {
-			toolingService = new SpringTooling(serviceConfiguration, serviceProcess.getInputStream(), serviceProcess.getOutputStream(),
+			toolingService = new SpringToolingService(serviceConfiguration, serviceProcess.getInputStream(), serviceProcess.getOutputStream(),
 					serviceProcess.getErrorStream());
 		}
 		return toolingService;
+	}
+	
+	public Process getInternalProcess() {
+		return this.serviceProcess;
 	}
 
 }

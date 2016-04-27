@@ -13,12 +13,10 @@ package org.springframework.ide.service.eclipse.process;
 /**
  * @author Martin Lippert
  */
-public interface IServiceManager {
+public class EnvironmentConfiguration {
 	
-	void startService(ServiceConfiguration serviceConfig);
-	void stopService(ServiceConfiguration serviceConfig);
-	boolean isServiceRunning(ServiceConfiguration serviceConfig);
-	ServiceProcess getServiceProcess(ServiceConfiguration serviceConfiguration);
-	ServiceProcess[] getServiceProcesses();
+	public EnvironmentConfiguration() {
+		// TODO: define environment variables
+	}
 
 }

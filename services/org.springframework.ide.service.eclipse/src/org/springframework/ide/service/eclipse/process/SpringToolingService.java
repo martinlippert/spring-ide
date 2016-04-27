@@ -22,11 +22,11 @@ import org.json.JSONObject;
  * 
  * @author Martin Lippert
  */
-public class SpringTooling {
+public class SpringToolingService {
 
 	private PrintWriter writer;
 
-	public SpringTooling(ServiceConfiguration serviceConfiguration, InputStream inputStream, OutputStream outputStream, InputStream errorStream) {
+	public SpringToolingService(ServiceConfiguration serviceConfiguration, InputStream inputStream, OutputStream outputStream, InputStream errorStream) {
 		this.writer = new PrintWriter(outputStream);
 	}
 	

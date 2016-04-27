@@ -26,11 +26,15 @@ import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.springframework.ide.service.eclipse.Activator;
-import org.springframework.ide.service.eclipse.process.IServiceManager;
+import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
 import org.springframework.ide.service.eclipse.process.ServiceConfiguration;
+import org.springframework.ide.service.eclipse.process.ServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
-import org.springframework.ide.service.eclipse.process.SpringTooling;
+import org.springframework.ide.service.eclipse.process.ServiceProcessConfiguration;
+import org.springframework.ide.service.eclipse.process.SpringToolingService;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -155,19 +159,30 @@ public class SpringBuilderService extends IncrementalProjectBuilder {
 
 	protected void fullBuild(final IProgressMonitor monitor)
 			throws CoreException {
-		IProject project = getProject();
-		String configRoot = "java:com.example.SimpleSpringProjectApplication";
-		ServiceConfiguration serviceConfiguration = new ServiceConfiguration(project, configRoot);
 		
-		IServiceManager serviceManager = Activator.getDefault().getServiceManager();
+		IVMInstall vmInstall = JavaRuntime.getDefaultVMInstall();
+		String vmargs = "";
+		EnvironmentConfiguration environmentConfig= new EnvironmentConfiguration();
 		
-		if (serviceManager.isServiceRunning(serviceConfiguration)) {
-			ServiceProcess process = serviceManager.getServiceProcess(serviceConfiguration);
-			SpringTooling toolingService = process.connectTo(serviceConfiguration);
-			toolingService.fullUpdate();
+		ServiceProcessConfiguration serviceProcessConfiguration = new ServiceProcessConfiguration(vmInstall, vmargs, environmentConfig);
+		ServiceManager serviceManager = Activator.getDefault().getServiceManager();
+		
+		try {
+			if (!serviceManager.isServiceProcessRunning(serviceProcessConfiguration)) {
+				serviceManager.startServiceProcess(serviceProcessConfiguration);
+			}
+			
+			ServiceProcess process = serviceManager.getServiceProcess(serviceProcessConfiguration);
+			if (process != null && process.isAlive()) {
+				IProject project = getProject();
+				String configRoot = "java:com.example.SimpleSpringProjectApplication";
+				
+				ServiceConfiguration serviceConfig = new ServiceConfiguration(project, configRoot, serviceProcessConfiguration);
+				SpringToolingService toolingService = process.connectTo(serviceConfig);				
+			}
 		}
-		else {
-			serviceManager.startService(serviceConfiguration);
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
