@@ -29,7 +29,10 @@ public class PingCommand implements Command {
 
 	@Override
 	public void run(JSONObject command, ProjectRegistry projectRegistry, URL[] agentClasspath, BackChannel backchannel) {
-		backchannel.sendMessage("{'pong' : pong}");
+		JSONObject pong = new JSONObject();
+		pong.put("pong", "pong");
+		
+		backchannel.sendMessage(pong.toString());
 	}
 
 }

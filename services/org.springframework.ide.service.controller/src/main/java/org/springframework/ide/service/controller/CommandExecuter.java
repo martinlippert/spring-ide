@@ -59,7 +59,7 @@ public class CommandExecuter {
 	public void run() {
 		final JSONTokener commandParser = new JSONTokener(this.input);
 
-		new Thread(new Runnable() {
+		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (true) {
@@ -84,7 +84,9 @@ public class CommandExecuter {
 					}
 				}
 			}
-		}).start();
+		});
+		thread.setDaemon(false);
+		thread.start();
 	}
 	
 	private void executeCommand(final Command command, final JSONObject message) {

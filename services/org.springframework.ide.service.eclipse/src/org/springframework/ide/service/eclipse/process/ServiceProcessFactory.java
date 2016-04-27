@@ -33,6 +33,10 @@ public class ServiceProcessFactory {
 	public static ServiceProcess createServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
 		List<String> commands = new ArrayList<>();
 		addJavaExecutableCommand(processConfig, commands);
+		
+//		commands.add("-Xdebug");
+//		commands.add("-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n");
+		
 		addServiceControllerClasspath(processConfig, commands);
 		String[] environment = getEnvironmentSettings(processConfig);
 
@@ -60,13 +64,13 @@ public class ServiceProcessFactory {
 
 			StringBuilder classpath = new StringBuilder();
 			File classesFolder = new File(targetFolder, "classes");
-			classpath.append(classesFolder.getAbsolutePath());
+			classpath.append(classesFolder.getAbsolutePath() + "/");
 
 			File libs = new File(targetFolder, "libs");
 			File[] files = libs.listFiles();
 			for (int i = 0; i < files.length; i++) {
 				if (files[i].getName().endsWith(".jar")) {
-					classpath.append(";");
+					classpath.append(File.pathSeparator);
 					classpath.append(files[i].getAbsolutePath());
 				}
 			}

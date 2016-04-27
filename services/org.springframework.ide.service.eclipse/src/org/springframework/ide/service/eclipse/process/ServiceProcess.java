@@ -10,6 +10,19 @@
  *******************************************************************************/
 package org.springframework.ide.service.eclipse.process;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
 /**
  * @author Martin Lippert
  */
@@ -17,13 +30,76 @@ public class ServiceProcess {
 
 	private final Process serviceProcess;
 	private final ServiceProcessConfiguration processConfiguration;
-
-	private SpringToolingService toolingService;
+	
+	private final BlockingQueue<JSONObject> sendQueue;
+	private final Thread sendThread;
+	private final PrintWriter processWriter;
+	
+	private final Thread receiveThread;
+	private final InputStream processInput;
+	private final List<MessageListener> messageListeners;
+	private InputStream processError;
+	private Thread errorThread;
 
 	public ServiceProcess(Process serviceProcess, ServiceProcessConfiguration processConfiguration) {
 		this.serviceProcess = serviceProcess;
 		this.processConfiguration = processConfiguration;
-		this.toolingService = null;
+		
+		this.messageListeners = new CopyOnWriteArrayList<>();
+		
+		this.processInput = serviceProcess.getInputStream();
+		this.receiveThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processInput));
+				while (true) {
+					try {
+						JSONObject message = new JSONObject(messageParser);
+						messageReceived(message);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		this.receiveThread.start();
+		
+		this.processError = serviceProcess.getErrorStream();
+		this.errorThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processInput));
+				while (true) {
+					try {
+						JSONObject message = new JSONObject(messageParser);
+						messageReceived(message);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		this.errorThread.start();
+
+		this.processWriter = new PrintWriter(serviceProcess.getOutputStream());
+		this.sendQueue = new ArrayBlockingQueue<>(100);
+		this.sendThread = new Thread(
+				new Runnable() {
+					@Override
+					public void run() {
+					     try {
+					         while (true) {
+					        	 	JSONObject message = sendQueue.take();
+					        	 	processWriter.write(message.toString());
+					        	 	processWriter.flush();
+					        	 }
+					     }
+					     catch (InterruptedException ex) {
+					    	 	ex.printStackTrace();
+					     }
+					}
+				});
+		this.sendThread.start();
 	}
 	
 	public ServiceProcessConfiguration getProcessConfiguration() {
@@ -37,20 +113,29 @@ public class ServiceProcess {
 	public void kill() {
 		if (this.serviceProcess != null) {
 			this.serviceProcess.destroyForcibly();
-			this.toolingService = null;
+			this.receiveThread.interrupt();
+			this.sendThread.interrupt();
 		}
 	}
 
-	public SpringToolingService connectTo(ServiceConfiguration serviceConfiguration) {
-		if (toolingService != null) {
-			toolingService = new SpringToolingService(serviceConfiguration, serviceProcess.getInputStream(), serviceProcess.getOutputStream(),
-					serviceProcess.getErrorStream());
-		}
-		return toolingService;
-	}
-	
 	public Process getInternalProcess() {
 		return this.serviceProcess;
+	}
+	
+	public boolean sendMessage(JSONObject message) throws Exception {
+		return this.sendQueue.offer(message);
+	}
+
+	public void addMessageListener(MessageListener messageListener) {
+		this.messageListeners.add(messageListener);
+	}
+	
+	public void removeMessageListener(MessageListener messageListener) {
+		this.messageListeners.remove(messageListener);
+	}
+	
+	protected void messageReceived(JSONObject message) {
+		this.messageListeners.forEach((listener) -> listener.messageReceived(message));
 	}
 
 }

@@ -12,6 +12,9 @@ package org.springframework.ide.service.controller;
 
 import java.net.URL;
 
+import org.springframework.ide.service.commands.GetFullModelCommand;
+import org.springframework.ide.service.commands.PingCommand;
+import org.springframework.ide.service.commands.SetupProjectCommand;
 import org.springframework.ide.service.internal.ProjectRegistry;
 
 /**
@@ -22,7 +25,12 @@ public class ControllerMain {
 	public static void main(String[] args) {
 		ProjectRegistry projectRegistry = new ProjectRegistry();
 		BackChannel backChannel = new BackChannel(System.out, System.err);
-		new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath()).run();
+		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());
+		commandExecuter.addCommand(new PingCommand());
+		commandExecuter.addCommand(new SetupProjectCommand());
+		commandExecuter.addCommand(new GetFullModelCommand());
+		
+		commandExecuter.run();
 	}
 
 	public static URL[] getAgentClasspath() {

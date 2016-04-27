@@ -177,8 +177,8 @@ public class SpringBuilderService extends IncrementalProjectBuilder {
 				IProject project = getProject();
 				String configRoot = "java:com.example.SimpleSpringProjectApplication";
 				
-				ServiceConfiguration serviceConfig = new ServiceConfiguration(project, configRoot, serviceProcessConfiguration);
-				SpringToolingService toolingService = process.connectTo(serviceConfig);				
+//				ServiceConfiguration serviceConfig = new ServiceConfiguration(project, configRoot, serviceProcessConfiguration);
+//				SpringToolingService toolingService = process.connectTo(serviceConfig);				
 			}
 		}
 		catch (Exception e) {
