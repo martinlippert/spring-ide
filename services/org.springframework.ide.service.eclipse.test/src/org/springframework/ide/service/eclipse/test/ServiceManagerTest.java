@@ -25,7 +25,6 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -111,7 +110,7 @@ public class ServiceManagerTest {
 		pingMessage.put("command-name", "ping");
 		serviceProcess.sendMessage(pingMessage);
 		
-		latch.await(300000000, TimeUnit.MILLISECONDS);
+		latch.await(300, TimeUnit.MILLISECONDS);
 		
 		assertEquals(1, responses.size());
 		JSONObject response = responses.get(0);

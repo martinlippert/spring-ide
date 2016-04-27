@@ -11,6 +11,7 @@
 package org.springframework.ide.service.eclipse.process;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -38,8 +39,8 @@ public class ServiceProcess {
 	private final Thread receiveThread;
 	private final InputStream processInput;
 	private final List<MessageListener> messageListeners;
-	private InputStream processError;
-	private Thread errorThread;
+	private final InputStream processError;
+	private final Thread errorThread;
 
 	public ServiceProcess(Process serviceProcess, ServiceProcessConfiguration processConfiguration) {
 		this.serviceProcess = serviceProcess;
@@ -52,10 +53,18 @@ public class ServiceProcess {
 			@Override
 			public void run() {
 				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processInput));
-				while (true) {
+				boolean streamClosed = false;
+				while (!streamClosed) {
 					try {
 						JSONObject message = new JSONObject(messageParser);
 						messageReceived(message);
+					} catch (JSONException e) {
+						if (e.getCause() instanceof IOException && e.getCause().getMessage().equals("Stream closed")) {
+							streamClosed = true;
+						}
+						else {
+							e.printStackTrace();
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -68,11 +77,20 @@ public class ServiceProcess {
 		this.errorThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processInput));
-				while (true) {
+				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processError));
+				boolean streamClosed = false;
+				while (!streamClosed) {
 					try {
 						JSONObject message = new JSONObject(messageParser);
 						messageReceived(message);
+					} catch (JSONException e) {
+						if (e.getCause() instanceof IOException && e.getCause().getMessage().equals("Stream closed")) {
+							streamClosed = true;
+						}
+						else {
+							e.printStackTrace();
+							// TODO: wrong JSON message received
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -95,7 +113,6 @@ public class ServiceProcess {
 					        	 }
 					     }
 					     catch (InterruptedException ex) {
-					    	 	ex.printStackTrace();
 					     }
 					}
 				});
@@ -112,9 +129,10 @@ public class ServiceProcess {
 
 	public void kill() {
 		if (this.serviceProcess != null) {
-			this.serviceProcess.destroyForcibly();
 			this.receiveThread.interrupt();
+			this.errorThread.interrupt();
 			this.sendThread.interrupt();
+			this.serviceProcess.destroyForcibly();
 		}
 	}
 
