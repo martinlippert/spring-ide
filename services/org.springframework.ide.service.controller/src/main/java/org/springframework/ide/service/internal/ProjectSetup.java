@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.springframework.ide.service.internal;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 
@@ -58,6 +59,18 @@ public class ProjectSetup {
 	public void createModel() throws Exception {
 		Method createModelMethod = agentMainClass.getMethod(AGENT_CREATE_MODEL_METHOD, AGENT_CREATE_MODEL_PARAMETERS);
 		createModelMethod.invoke(null,  new Object[] {});
+	}
+
+	public void close() {
+		try {
+			backchannel.close();
+			backchannel = null;
+			agentMainClass = null;
+			libLoader.close();
+			sourceLoader.close();
+			agentLoader.close();
+		} catch (IOException e) {
+		}
 	}
 
 }

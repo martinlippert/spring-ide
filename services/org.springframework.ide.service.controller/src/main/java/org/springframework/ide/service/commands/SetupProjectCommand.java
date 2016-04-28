@@ -33,10 +33,17 @@ public class SetupProjectCommand implements Command {
 	public void run(JSONObject command, ProjectRegistry projectRegistry, URL[] agentClasspath, BackChannel backchannel) {
 		long startTime = System.currentTimeMillis();
 		
-		String projectName = (String) command.get("project-name");
-		String classpath = (String) command.get("project-classpath");
-		String sourcepath = (String) command.get("project-sourcepath");
-		String springConfigFiles = (String) command.get("spring-config-files");
+		String projectName = command.getString("project-name");
+		String classpath = command.getString("project-classpath");
+		String sourcepath = command.getString("project-sourcepath");
+		String springConfigFiles = command.getString("spring-config-files");
+		boolean forceUpdate = command.getBoolean("force-update");
+		
+		if (forceUpdate && projectRegistry.has(projectName)) {
+			ProjectSetup projectSetup = projectRegistry.get(projectName);
+			projectSetup.close();
+			projectRegistry.remove(projectName);
+		}
 		
 		if (!projectRegistry.has(projectName)) {
 			Project project = new Project(projectName, classpath, sourcepath, springConfigFiles, agentClasspath);

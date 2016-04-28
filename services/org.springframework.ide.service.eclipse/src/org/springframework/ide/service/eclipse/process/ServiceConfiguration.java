@@ -34,6 +34,10 @@ public class ServiceConfiguration {
 	public String getConfigRoot() {
 		return configRoot;
 	}
+	
+	public ServiceProcessConfiguration getProcessConfig() {
+		return processConfig;
+	}
 
 	@Override
 	public int hashCode() {

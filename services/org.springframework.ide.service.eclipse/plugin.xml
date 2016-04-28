@@ -15,7 +15,7 @@
    </extension>
    
    <extension
-         id="sampleNature"
+         id="springBootNature"
          name="Spring Boot Nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
@@ -48,7 +48,7 @@
             locationURI="popup:org.eclipse.ui.projectConfigure?after=additions">
          <command
                commandId="org.springframework.ide.service.eclipse.addRemoveSpringBootNature"
-               label="Disable Spring Boot builder"
+               label="Disable Spring Boot Builder"
                style="push">
             <visibleWhen
                   checkEnabled="false">
@@ -70,8 +70,8 @@
             </visibleWhen>
          </command>
          <command
-               commandId="org.springframework.ide.service.eclipse.addRemoveSampleNature"
-               label="Enable Spring Boot builder"
+               commandId="org.springframework.ide.service.eclipse.addRemoveSpringBootNature"
+               label="Enable Spring Boot Builder"
                style="push">
             <visibleWhen
                   checkEnabled="false">

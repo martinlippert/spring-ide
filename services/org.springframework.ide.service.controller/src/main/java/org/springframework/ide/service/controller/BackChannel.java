@@ -59,4 +59,8 @@ public class BackChannel {
 		exception.printStackTrace(this.err);
 		this.err.flush();
 	}
+	
+	public void close() {
+	}
+
 }

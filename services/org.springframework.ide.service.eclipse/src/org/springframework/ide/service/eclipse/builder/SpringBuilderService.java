@@ -30,9 +30,11 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.springframework.ide.service.eclipse.Activator;
 import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
+import org.springframework.ide.service.eclipse.process.ServiceConfiguration;
 import org.springframework.ide.service.eclipse.process.ServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
 import org.springframework.ide.service.eclipse.process.ServiceProcessConfiguration;
+import org.springframework.ide.service.eclipse.process.SpringToolingService;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -157,31 +159,42 @@ public class SpringBuilderService extends IncrementalProjectBuilder {
 
 	protected void fullBuild(final IProgressMonitor monitor)
 			throws CoreException {
-		
-		IVMInstall vmInstall = JavaRuntime.getDefaultVMInstall();
-		String vmargs = "";
-		EnvironmentConfiguration environmentConfig= new EnvironmentConfiguration();
-		
-		ServiceProcessConfiguration serviceProcessConfiguration = new ServiceProcessConfiguration(vmInstall, vmargs, environmentConfig);
-		ServiceManager serviceManager = Activator.getDefault().getServiceManager();
-		
+		ServiceConfiguration[] serviceConfigs = getServiceConfigs(getProject());
+		for (int i = 0; i < serviceConfigs.length; i++) {
+			fullBuild(serviceConfigs[i]);
+		}
+	}
+
+	private void fullBuild(ServiceConfiguration serviceConfiguration) {
 		try {
-			if (!serviceManager.isServiceProcessRunning(serviceProcessConfiguration)) {
-				serviceManager.startServiceProcess(serviceProcessConfiguration);
+			ServiceManager serviceManager = Activator.getDefault().getServiceManager();
+			
+			ServiceProcessConfiguration processConfig = serviceConfiguration.getProcessConfig();
+			if (!serviceManager.isServiceProcessRunning(processConfig)) {
+				serviceManager.startServiceProcess(processConfig);
 			}
 			
-			ServiceProcess process = serviceManager.getServiceProcess(serviceProcessConfiguration);
+			ServiceProcess process = serviceManager.getServiceProcess(processConfig);
 			if (process != null && process.isAlive()) {
-				IProject project = getProject();
-				String configRoot = "java:com.example.SimpleSpringProjectApplication";
-				
-//				ServiceConfiguration serviceConfig = new ServiceConfiguration(project, configRoot, serviceProcessConfiguration);
-//				SpringToolingService toolingService = process.connectTo(serviceConfig);				
+				SpringToolingService toolingService = new SpringToolingService(serviceConfiguration, process);
+				toolingService.setupAndUpdate();
 			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private ServiceConfiguration[] getServiceConfigs(IProject project) {
+		// TODO: this needs to be configured for each project and read from that project configuration or somewhere
+		IVMInstall jdk = JavaRuntime.getDefaultVMInstall();
+		String vmargs = "";
+		EnvironmentConfiguration environmentConfig= new EnvironmentConfiguration();
+		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, vmargs, environmentConfig);
+
+		ServiceConfiguration serviceConfig = new ServiceConfiguration(project, "java:com.example.SimpleSpringProjectApplication", processConfig);
+
+		return new ServiceConfiguration[] {serviceConfig};
 	}
 
 	private SAXParser getParser() throws ParserConfigurationException,
