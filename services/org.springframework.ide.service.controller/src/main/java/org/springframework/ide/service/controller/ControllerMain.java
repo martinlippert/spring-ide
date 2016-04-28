@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.springframework.ide.service.controller;
 
+import java.io.File;
 import java.net.URL;
 
 import org.springframework.ide.service.commands.GetFullModelCommand;
@@ -22,7 +23,7 @@ import org.springframework.ide.service.internal.ProjectRegistry;
  */
 public class ControllerMain {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		ProjectRegistry projectRegistry = new ProjectRegistry();
 		BackChannel backChannel = new BackChannel(System.out, System.err);
 		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());
@@ -33,8 +34,11 @@ public class ControllerMain {
 		commandExecuter.run();
 	}
 
-	public static URL[] getAgentClasspath() {
-		return new URL[] {};
+	public static URL[] getAgentClasspath() throws Exception {
+		URL url = ControllerMain.class.getClassLoader().getResource("");
+		File binFolder = new File(url.toURI());
+		File agentClassesFolder = new File(binFolder.getParentFile().getParentFile().getParentFile(), "org.springframework.ide.service.agent/target/classes");
+		return new URL[] {agentClassesFolder.toURI().toURL()};
 	}
 
 }
