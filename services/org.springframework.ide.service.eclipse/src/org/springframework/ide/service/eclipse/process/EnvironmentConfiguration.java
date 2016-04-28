@@ -10,13 +10,39 @@
  *******************************************************************************/
 package org.springframework.ide.service.eclipse.process;
 
+import java.util.Arrays;
+
 /**
  * @author Martin Lippert
  */
 public class EnvironmentConfiguration {
 	
+	private String[] env;
+	
 	public EnvironmentConfiguration() {
-		// TODO: define environment variables
+		env = new String[0];
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(env);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		EnvironmentConfiguration other = (EnvironmentConfiguration) obj;
+		if (!Arrays.equals(env, other.env))
+			return false;
+		return true;
 	}
 
 }

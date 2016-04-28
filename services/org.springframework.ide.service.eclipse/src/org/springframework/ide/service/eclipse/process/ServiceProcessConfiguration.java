@@ -44,7 +44,7 @@ public class ServiceProcessConfiguration {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((environment == null) ? 0 : environment.hashCode());
-		result = prime * result + ((jdk == null) ? 0 : jdk.hashCode());
+		result = prime * result + ((jdk == null) ? 0 : jdk.getName().hashCode());
 		result = prime * result + ((vmargs == null) ? 0 : vmargs.hashCode());
 		return result;
 	}
@@ -66,7 +66,7 @@ public class ServiceProcessConfiguration {
 		if (jdk == null) {
 			if (other.jdk != null)
 				return false;
-		} else if (!jdk.equals(other.jdk))
+		} else if (!jdk.getName().equals(other.jdk.getName()))
 			return false;
 		if (vmargs == null) {
 			if (other.vmargs != null)
