@@ -77,20 +77,13 @@ public class ServiceProcess {
 		this.errorThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				final JSONTokener messageParser = new JSONTokener(new InputStreamReader(processError));
-				boolean streamClosed = false;
-				while (!streamClosed) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(processError));
+				while (true) {
 					try {
-						JSONObject message = new JSONObject(messageParser);
-						messageReceived(message);
-					} catch (JSONException e) {
-						if (e.getCause() instanceof IOException && e.getCause().getMessage().equals("Stream closed")) {
-							streamClosed = true;
-						}
-						else {
-							e.printStackTrace();
-							// TODO: wrong JSON message received
-						}
+						String line = reader.readLine();
+						System.err.println("[service process] " + line);
+					} catch (IOException e) {
+						e.printStackTrace();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
