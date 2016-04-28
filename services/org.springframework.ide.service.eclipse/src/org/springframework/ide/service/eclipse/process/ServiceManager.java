@@ -22,6 +22,13 @@ public class ServiceManager {
 	
 	public ServiceManager() {
 		this.services = new ConcurrentHashMap<>();
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				ServiceManager.this.services.values().forEach((process) -> process.kill());
+			}
+		}));
 	}
 
 	public void startServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
