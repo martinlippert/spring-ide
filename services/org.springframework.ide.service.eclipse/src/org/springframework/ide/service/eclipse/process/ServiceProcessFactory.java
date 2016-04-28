@@ -45,12 +45,10 @@ public class ServiceProcessFactory {
 	private static void addJavaExecutableCommand(ServiceProcessConfiguration processConfig, List<String> commands) {
 		IVMInstall jdk = processConfig.getJdkConfiguration();
 		File javaExecutable = StandardVMType.findJavaExecutable(jdk.getInstallLocation());
-		
 		commands.add(javaExecutable.getAbsolutePath());
 	}
  	
 	private static void addServiceControllerClasspath(ServiceProcessConfiguration processConfig, List<String> commands) {
-		
 		URL resource = ServiceProcessFactory.class.getClassLoader().getResource("");
 		try {
 			URL resolve = FileLocator.toFileURL(resource);
