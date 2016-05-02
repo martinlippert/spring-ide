@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.json.JSONObject;
+import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
 
 /**
  * This is the main Spring Tooling API for the external Spring tooling as a service.

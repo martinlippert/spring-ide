@@ -23,6 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 
 /**
  * @author Martin Lippert

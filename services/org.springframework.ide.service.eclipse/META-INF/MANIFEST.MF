@@ -13,4 +13,5 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: org.springframework.ide.service.eclipse,
  org.springframework.ide.service.eclipse.builder,
+ org.springframework.ide.service.eclipse.config,
  org.springframework.ide.service.eclipse.process

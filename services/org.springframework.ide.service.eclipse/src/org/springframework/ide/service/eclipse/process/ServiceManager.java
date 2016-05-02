@@ -13,6 +13,8 @@ package org.springframework.ide.service.eclipse.process;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
+
 /**
  * @author Martin Lippert
  */

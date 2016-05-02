@@ -8,9 +8,10 @@
  * Contributors:
  *     Pivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.springframework.ide.service.eclipse.process;
+package org.springframework.ide.service.eclipse.config;
 
 import org.eclipse.jdt.launching.IVMInstall;
+import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
 
 /**
  * @author Martin Lippert

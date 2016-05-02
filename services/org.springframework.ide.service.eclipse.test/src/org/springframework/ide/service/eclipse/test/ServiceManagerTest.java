@@ -30,11 +30,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.ide.service.eclipse.Activator;
+import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
 import org.springframework.ide.service.eclipse.process.MessageListener;
 import org.springframework.ide.service.eclipse.process.ServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
-import org.springframework.ide.service.eclipse.process.ServiceProcessConfiguration;
 
 /**
  * @author Martin Lippert

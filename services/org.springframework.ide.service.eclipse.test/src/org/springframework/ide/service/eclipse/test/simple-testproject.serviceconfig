@@ -1,0 +1,10 @@
+{
+	"project-name" : "testproject",
+	"service-configs" : [
+		{
+			"config-root" : "testconfigroot",
+			"process-config" : {
+			}
+		}
+	]
+}

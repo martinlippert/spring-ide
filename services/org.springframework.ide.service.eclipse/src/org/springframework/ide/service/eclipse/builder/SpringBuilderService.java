@@ -29,11 +29,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.springframework.ide.service.eclipse.Activator;
+import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
+import org.springframework.ide.service.eclipse.config.ServiceConfigurationStorage;
+import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
-import org.springframework.ide.service.eclipse.process.ServiceConfiguration;
 import org.springframework.ide.service.eclipse.process.ServiceManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
-import org.springframework.ide.service.eclipse.process.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.SpringToolingService;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -186,15 +187,8 @@ public class SpringBuilderService extends IncrementalProjectBuilder {
 	}
 
 	private ServiceConfiguration[] getServiceConfigs(IProject project) {
-		// TODO: this needs to be configured for each project and read from that project configuration or somewhere
-		IVMInstall jdk = JavaRuntime.getDefaultVMInstall();
-		String vmargs = "";
-		EnvironmentConfiguration environmentConfig= new EnvironmentConfiguration();
-		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, vmargs, environmentConfig);
-
-		ServiceConfiguration serviceConfig = new ServiceConfiguration(project, "java:com.example.SimpleSpringProjectApplication", processConfig);
-
-		return new ServiceConfiguration[] {serviceConfig};
+		ServiceConfiguration[] configs = ServiceConfigurationStorage.readConfigs(project);
+		return configs;
 	}
 
 	private SAXParser getParser() throws ParserConfigurationException,

@@ -8,7 +8,7 @@
  * Contributors:
  *     Pivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.springframework.ide.service.eclipse.process;
+package org.springframework.ide.service.eclipse.config;
 
 import org.eclipse.core.resources.IProject;
 

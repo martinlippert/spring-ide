@@ -18,6 +18,7 @@ import java.util.List;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 
 /**
  * @author Martin Lippert

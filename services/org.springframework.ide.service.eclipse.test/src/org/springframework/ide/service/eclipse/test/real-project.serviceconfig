@@ -1,0 +1,20 @@
+{
+	"project-name" : "RealTestProject",
+	"service-configs" : [
+		{
+			"config-root" : "testconfigroot1",
+			"process-config" : {
+			}
+		},
+		{
+			"config-root" : "testconfigroot2",
+			"process-config" : {
+			}
+		},
+		{
+			"config-root" : "testconfigroot3",
+			"process-config" : {
+			}
+		}
+	]
+}
