@@ -26,6 +26,7 @@ public class ControllerMain {
 	public static void main(String[] args) throws Exception {
 		ProjectRegistry projectRegistry = new ProjectRegistry();
 		BackChannel backChannel = new BackChannel(System.out, System.err);
+		
 		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());
 		commandExecuter.addCommand(new PingCommand());
 		commandExecuter.addCommand(new SetupProjectCommand());
@@ -40,5 +41,5 @@ public class ControllerMain {
 		File agentClassesFolder = new File(binFolder.getParentFile().getParentFile().getParentFile(), "org.springframework.ide.service.agent/target/classes");
 		return new URL[] {agentClassesFolder.toURI().toURL()};
 	}
-
+	
 }

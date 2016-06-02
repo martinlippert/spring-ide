@@ -12,6 +12,7 @@ package org.springframework.ide.service.controller.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -44,7 +46,8 @@ public class TestProjectSetup {
 	/**
 	 * response timeout in ms
 	 */
-	private static final int TIMEOUT = 100000;
+	private static final int MESSAGE_TIMEOUT = 5000;
+	private static final int ERROR_TIMEOUT = 100;
 
 	private ByteArrayOutputStream resultErr;
 	private BackChannel backchannel;
@@ -73,7 +76,7 @@ public class TestProjectSetup {
 		backchannel = new BackChannel(new PrintStream(pipedOutputStream), new PrintStream(resultErr));
 		projectRegistry = new ProjectRegistry();
 		
-		executor = Executors.newFixedThreadPool(1);
+		executor = Executors.newFixedThreadPool(5);
 	}
 
 	@Test
@@ -88,6 +91,7 @@ public class TestProjectSetup {
 		setupMessage.put("project-classpath", "");
 		setupMessage.put("project-sourcepath", "");
 		setupMessage.put("spring-config-files", "");
+		setupMessage.put("force-update", true);
 		
 		writer.print(setupMessage.toString());
 		writer.flush();
@@ -103,7 +107,7 @@ public class TestProjectSetup {
 		
 		System.out.println("execution time: " + time);
 		
-		String error = resultErr.toString();
+		String error = waitForError(resultErr);
 		assertTrue(error.length() > 0);
 		assertTrue(error.contains("java.lang.ClassNotFoundException: org.springframework.ide.service.agent.AgentMain"));
 	}
@@ -124,6 +128,7 @@ public class TestProjectSetup {
 		setupMessage.put("project-classpath", "");
 		setupMessage.put("project-sourcepath", "");
 		setupMessage.put("spring-config-files", "");
+		setupMessage.put("force-update", true);
 		
 		writer.print(setupMessage.toString());
 		writer.flush();
@@ -139,8 +144,12 @@ public class TestProjectSetup {
 		
 		System.out.println("execution time: " + time);
 		
-		String error = resultErr.toString();
-		assertTrue(error.length() == 0);
+		try {
+			String errorMessage = waitForError(resultErr);
+			fail("error appreaded: " + errorMessage);
+		}
+		catch (TimeoutException e) {
+		}
 	}
 
 	@Test
@@ -161,6 +170,7 @@ public class TestProjectSetup {
 		setupMessage.put("project-classpath", projectJAR);
 		setupMessage.put("project-sourcepath", "");
 		setupMessage.put("spring-config-files", "");
+		setupMessage.put("force-update", true);
 		
 		writer.print(setupMessage.toString());
 		writer.flush();
@@ -176,8 +186,12 @@ public class TestProjectSetup {
 		
 		System.out.println("execution time: " + time);
 		
-		String error = resultErr.toString();
-		assertTrue(error.length() == 0);
+		try {
+			String errorMessage = waitForError(resultErr);
+			fail("error appreaded: " + errorMessage);
+		}
+		catch (TimeoutException e) {
+		}
 	}
 
 	@Test
@@ -200,6 +214,7 @@ public class TestProjectSetup {
 		setupMessage.put("project-classpath", projectClasspath);
 		setupMessage.put("project-sourcepath", projectJAR);
 		setupMessage.put("spring-config-files", "java:com.example.SimpleSpringProjectApplication");
+		setupMessage.put("force-update", true);
 		
 		writer.print(setupMessage.toString());
 		writer.flush();
@@ -224,8 +239,12 @@ public class TestProjectSetup {
 		assertEquals("TestProjectName", model.get("project-name"));
 		assertTrue(model.has("model-root"));
 		
-		String error = resultErr.toString();
-		assertTrue(error.length() == 0);
+		try {
+			String errorMessage = waitForError(resultErr);
+			fail("error appreaded: " + errorMessage);
+		}
+		catch (TimeoutException e) {
+		}
 	}
 
 	private String getProjectJAR(String projectName) {
@@ -257,8 +276,25 @@ public class TestProjectSetup {
 				return new JSONObject(parser);
 			}
 		});
-		
-		return task.get(TIMEOUT, TimeUnit.MILLISECONDS);
+		return task.get(MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS);
+	}
+
+	protected String waitForError(final ByteArrayOutputStream errorStream) throws Exception {
+		Future<String> task = executor.submit(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				String error = null;
+				while (true) {
+					error = errorStream.toString();
+					if (error != null && error.length() > 0) {
+						break;
+					}
+					Thread.sleep(50);
+				}
+				return error;
+			}
+		});
+		return task.get(ERROR_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
 }

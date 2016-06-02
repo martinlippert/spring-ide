@@ -34,5 +34,5 @@ public class PingCommand implements Command {
 		
 		backchannel.sendMessage(pong.toString());
 	}
-
+	
 }
