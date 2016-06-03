@@ -1,0 +1,10 @@
+{
+	"project-name" : "simple-spring-project",
+	"service-configs" : [
+		{
+			"config-root" : "java:com.example.SimpleSpringProjectApplication",
+			"process-config" : {
+			}
+		}
+	]
+}
