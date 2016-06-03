@@ -11,8 +11,10 @@
 package org.springframework.ide.service.controller;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.net.URL;
 
+import org.json.JSONObject;
 import org.springframework.ide.service.commands.GetFullModelCommand;
 import org.springframework.ide.service.commands.PingCommand;
 import org.springframework.ide.service.commands.SetupProjectCommand;
@@ -26,6 +28,20 @@ public class ControllerMain {
 	public static void main(String[] args) throws Exception {
 		ProjectRegistry projectRegistry = new ProjectRegistry();
 		BackChannel backChannel = new BackChannel(System.out, System.err);
+		
+		File tempOutFile = File.createTempFile("stdout", "log");
+		File tempErrFile = File.createTempFile("errout", "log");
+
+		PrintStream outFile = new PrintStream(tempOutFile);
+		PrintStream errFile = new PrintStream(tempErrFile);
+		
+		System.setOut(outFile);
+		System.setErr(errFile);
+		
+		JSONObject logFileMessage = new JSONObject();
+		logFileMessage.put("stdout", tempOutFile.getAbsolutePath());
+		logFileMessage.put("errOut", tempErrFile.getAbsolutePath());
+		backChannel.sendMessage(logFileMessage.toString());
 		
 		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());
 		commandExecuter.addCommand(new PingCommand());

@@ -46,9 +46,9 @@ public class JavaConfigurationRoot implements ConfigurationRoot {
 	protected void setupModelCreation(String rootClassName) throws Exception {
 		ClassLoader classLoader = this.getClass().getClassLoader();
 		
-		System.setProperty("logging.level.ROOT", "OFF");
-		LoggingSystem loggingSystem = LoggingSystem.get(classLoader);
-		loggingSystem.beforeInitialize();
+//		System.setProperty("logging.level.ROOT", "OFF");
+//		LoggingSystem loggingSystem = LoggingSystem.get(classLoader);
+//		loggingSystem.beforeInitialize();
 		
 		// register root bean
 		Class<?> rootClass = classLoader.loadClass(rootClassName);
