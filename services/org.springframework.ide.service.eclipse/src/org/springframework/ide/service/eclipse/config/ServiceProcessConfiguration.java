@@ -21,23 +21,29 @@ public class ServiceProcessConfiguration {
 	private final IVMInstall jdk;
 	private final String vmargs;
 	private final EnvironmentConfiguration environment;
+	private final String name;
 	
 	public ServiceProcessConfiguration(IVMInstall jdk, String vmargs, EnvironmentConfiguration environment) {
 		this.jdk = jdk;
 		this.vmargs = vmargs;
 		this.environment = environment;
+		this.name = "ToolingServiceProcess";
 	}
 	
 	public IVMInstall getJdkConfiguration() {
-		return jdk;
+		return this.jdk;
 	}
 	
 	public String getVmargs() {
-		return vmargs;
+		return this.vmargs;
 	}
 	
 	public EnvironmentConfiguration getEnvironment() {
-		return environment;
+		return this.environment;
+	}
+
+	public String getName() {
+		return this.name;
 	}
 
 	@Override

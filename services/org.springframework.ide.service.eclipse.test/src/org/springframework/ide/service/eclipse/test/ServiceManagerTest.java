@@ -95,7 +95,7 @@ public class ServiceManagerTest {
 		assertTrue(manager.isServiceProcessRunning(processConfig));
 		ServiceProcess serviceProcess = manager.getServiceProcess(processConfig);
 		
-		final CountDownLatch latch = new CountDownLatch(1);
+		final CountDownLatch latch = new CountDownLatch(2);
 		final List<JSONObject> responses = new ArrayList<>();
 		
 		serviceProcess.addMessageListener(new MessageListener() {
@@ -112,11 +112,16 @@ public class ServiceManagerTest {
 		
 		latch.await(300, TimeUnit.MILLISECONDS);
 		
-		assertEquals(1, responses.size());
-		JSONObject response = responses.get(0);
-		assertNotNull(response);
-		assertTrue(response.has("pong"));
-		assertEquals("pong", response.getString("pong"));
+		assertEquals(2, responses.size());
+		JSONObject logFileResponse = responses.get(0);
+		assertNotNull(logFileResponse);
+		assertTrue(logFileResponse.has("stdout"));
+		assertTrue(logFileResponse.has("errout"));
+
+		JSONObject pongResponse = responses.get(1);
+		assertNotNull(pongResponse);
+		assertTrue(pongResponse.has("pong"));
+		assertEquals("pong", pongResponse.getString("pong"));
 
 		manager.stopServiceProcess(processConfig);
 	}

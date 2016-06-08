@@ -26,11 +26,13 @@ import org.springframework.ide.service.internal.ProjectRegistry;
 public class ControllerMain {
 	
 	public static void main(String[] args) throws Exception {
+		String name = args[0];
+		
 		ProjectRegistry projectRegistry = new ProjectRegistry();
 		BackChannel backChannel = new BackChannel(System.out, System.err);
 		
-		File tempOutFile = File.createTempFile("stdout", "log");
-		File tempErrFile = File.createTempFile("errout", "log");
+		File tempOutFile = File.createTempFile(name + "-stdout", "log");
+		File tempErrFile = File.createTempFile(name + "-errout", "log");
 
 		PrintStream outFile = new PrintStream(tempOutFile);
 		PrintStream errFile = new PrintStream(tempErrFile);
@@ -40,7 +42,7 @@ public class ControllerMain {
 		
 		JSONObject logFileMessage = new JSONObject();
 		logFileMessage.put("stdout", tempOutFile.getAbsolutePath());
-		logFileMessage.put("errOut", tempErrFile.getAbsolutePath());
+		logFileMessage.put("errout", tempErrFile.getAbsolutePath());
 		backChannel.sendMessage(logFileMessage.toString());
 		
 		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());

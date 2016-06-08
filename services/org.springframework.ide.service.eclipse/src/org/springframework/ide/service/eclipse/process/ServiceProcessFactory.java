@@ -37,6 +37,8 @@ public class ServiceProcessFactory {
 //		commands.add("-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n");
 		
 		addServiceControllerClasspath(processConfig, commands);
+		commands.add(processConfig.getName());
+		
 		String[] environment = getEnvironmentSettings(processConfig);
 
 		Process process = Runtime.getRuntime().exec(commands.toArray(new String[0]), environment);
