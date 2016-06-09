@@ -17,6 +17,7 @@ import java.net.URL;
 
 import org.eclipse.core.resources.IPathVariableManager;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
@@ -32,39 +33,80 @@ import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
  * 
  * @author Martin Lippert
  */
-public class SpringToolingService {
+public class ToolingService {
 
 	private static final String FILE_SCHEME = "file";
 
 	private final ServiceProcess serviceProcess;
 	private final ServiceConfiguration serviceConfiguration;
+	private final MessageListener messageListener;
+	
+	private boolean initialized;
+	private boolean updateClasspath;
 
-	public SpringToolingService(ServiceConfiguration serviceConfiguration, ServiceProcess serviceProcess) {
+	public ToolingService(ServiceConfiguration serviceConfiguration, ServiceProcess serviceProcess) {
 		this.serviceConfiguration = serviceConfiguration;
 		this.serviceProcess = serviceProcess;
 		
-		this.serviceProcess.addMessageListener(new MessageListener() {
+		this.messageListener = new MessageListener() {
 			@Override
 			public void messageReceived(JSONObject message) {
 				System.out.println("tooling message received: " + message.toString());
 			}
-		});
+		};
+		
+		this.serviceProcess.addMessageListener(messageListener);
+		this.initialized = false;
+		this.updateClasspath = false;
 	}
 	
-	public void setupAndUpdate() throws Exception {
+	public void close() {
+		this.serviceProcess.removeMessageListener(messageListener);
+	}
+	
+	public void triggerFullBuild() throws Exception {
 		setup(true);
+	}
+	
+	public void triggerIncrementalBuild(IResourceDelta delta) throws Exception {
+		if (!this.initialized || this.updateClasspath) {
+			setup(true);
+		}
+		else {
+			triggerUpdate();
+		}
+	}
+
+	private void triggerUpdate() throws Exception {
+		JSONObject setupMessage = new JSONObject();
+		setupMessage.put("command-name", "update-project");
+		setupMessage.put("project-name", serviceConfiguration.getProject().getName());
+		setupMessage.put("project-sourcepath", getSourcePath(serviceConfiguration.getProject()));
+		setupMessage.put("spring-config-files", serviceConfiguration.getConfigRoot());
+		
+		this.serviceProcess.sendMessage(setupMessage);
 	}
 
 	public void setup(boolean forceUpdate) throws Exception {
-		JSONObject setupMessage = new JSONObject();
-		setupMessage.put("command-name", "setup-project");
-		setupMessage.put("project-name", serviceConfiguration.getProject().getName());
-		setupMessage.put("project-classpath", getProjectClasspath(serviceConfiguration.getProject()));
-		setupMessage.put("project-sourcepath", getSourcePath(serviceConfiguration.getProject()));
-		setupMessage.put("spring-config-files", serviceConfiguration.getConfigRoot());
-		setupMessage.put("force-update", forceUpdate);
-		
-		this.serviceProcess.sendMessage(setupMessage);
+		synchronized(this) {
+			JSONObject setupMessage = new JSONObject();
+			setupMessage.put("command-name", "setup-project");
+			setupMessage.put("project-name", serviceConfiguration.getProject().getName());
+			setupMessage.put("project-classpath", getProjectClasspath(serviceConfiguration.getProject()));
+			setupMessage.put("project-sourcepath", getSourcePath(serviceConfiguration.getProject()));
+			setupMessage.put("spring-config-files", serviceConfiguration.getConfigRoot());
+			setupMessage.put("force-update", forceUpdate);
+			
+			this.serviceProcess.sendMessage(setupMessage);
+			this.initialized = true;
+			this.updateClasspath = false;
+		}
+	}
+
+	public void setClasspathChanged(IProject project) {
+		if (this.serviceConfiguration.getProject().equals(project)) {
+			this.updateClasspath = true;
+		}
 	}
 
 	private String getSourcePath(IProject project) {

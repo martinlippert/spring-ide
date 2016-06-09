@@ -33,7 +33,7 @@ import org.springframework.ide.service.eclipse.Activator;
 import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
 import org.springframework.ide.service.eclipse.process.MessageListener;
-import org.springframework.ide.service.eclipse.process.ServiceManager;
+import org.springframework.ide.service.eclipse.process.ServiceProcessManager;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
 
 /**
@@ -61,7 +61,7 @@ public class ServiceManagerTest {
 
 	@Test
 	public void testNoExternalServiceProcess() throws Exception {
-		ServiceManager manager = Activator.getDefault().getServiceManager();
+		ServiceProcessManager manager = Activator.getDefault().getServiceProcessManager();
 		
 		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, "randomargs", new EnvironmentConfiguration());
 		assertFalse(manager.isServiceProcessRunning(processConfig));
@@ -69,7 +69,7 @@ public class ServiceManagerTest {
 	
 	@Test
 	public void testStartStopExternalProcess() throws Exception {
-		ServiceManager manager = Activator.getDefault().getServiceManager();
+		ServiceProcessManager manager = Activator.getDefault().getServiceProcessManager();
 		
 		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, "randomargs", new EnvironmentConfiguration());
 		manager.startServiceProcess(processConfig);
@@ -88,7 +88,7 @@ public class ServiceManagerTest {
 
 	@Test
 	public void testSendPingToExternalProcess() throws Exception {
-		ServiceManager manager = Activator.getDefault().getServiceManager();
+		ServiceProcessManager manager = Activator.getDefault().getServiceProcessManager();
 		
 		ServiceProcessConfiguration processConfig = new ServiceProcessConfiguration(jdk, "randomargs", new EnvironmentConfiguration());
 		manager.startServiceProcess(processConfig);

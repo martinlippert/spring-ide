@@ -55,6 +55,27 @@ public class ProjectSetup {
 		Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
 		agentMainMethod.invoke(null, this.project.getProjectName(), (String[]) this.project.getSpringConfigFiles(), backchannel);
 	}
+	
+	public void update() throws Exception {
+		URLClassLoader oldSourceLoader = this.sourceLoader;
+		URLClassLoader oldAgentLoader = this.agentLoader;
+		
+		cleanupModel();
+
+		sourceLoader = new URLClassLoader(this.project.getSourcepath(), libLoader);
+		agentLoader = new URLClassLoader(this.project.getAgentClasspath(), sourceLoader);
+		
+		agentMainClass = agentLoader.loadClass(AGENT_MAIN_CLASS);
+		Method agentMainMethod = agentMainClass.getMethod(AGENT_MAIN_METHOD, AGENT_MAIN_PARAMETERS);
+		agentMainMethod.invoke(null, this.project.getProjectName(), (String[]) this.project.getSpringConfigFiles(), backchannel);
+		
+		oldSourceLoader.close();
+		oldAgentLoader.close();
+	}
+
+	public void cleanupModel() throws Exception {
+		// call the model cleanup method via reflection
+	}
 
 	public void createModel() throws Exception {
 		Method createModelMethod = agentMainClass.getMethod(AGENT_CREATE_MODEL_METHOD, AGENT_CREATE_MODEL_PARAMETERS);
@@ -63,7 +84,6 @@ public class ProjectSetup {
 
 	public void close() {
 		try {
-			backchannel.close();
 			backchannel = null;
 			agentMainClass = null;
 			libLoader.close();

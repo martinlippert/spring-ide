@@ -3,28 +3,28 @@
 <plugin>
 
    <extension
-         id="springBuilderService"
-         name="Spring Builder Service"
+         id="serviceBasedProjectBuilder"
+         name="Service-based Project Builder"
          point="org.eclipse.core.resources.builders">
       <builder
             hasNature="true">
          <run
-               class="org.springframework.ide.service.eclipse.builder.SpringBuilderService">
+               class="org.springframework.ide.service.eclipse.builder.ServiceBasedProjectBuilder">
          </run>
       </builder>
    </extension>
    
    <extension
-         id="springBootNature"
+         id="serviceBasedToolingNature"
          name="Spring Boot Nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
          <run
-               class="org.springframework.ide.service.eclipse.builder.SpringBootNature">
+               class="org.springframework.ide.service.eclipse.builder.ServiceBasedToolingNature">
          </run>
       </runtime>
       <builder
-            id="org.springframework.ide.service.eclipse.springBuilderService">
+            id="org.springframework.ide.service.eclipse.serviceBasedProjectBuilder">
       </builder>
    </extension>
    
@@ -32,13 +32,13 @@
          point="org.eclipse.ui.commands">
       <category
             name="Spring Boot Nature commands"
-            id="org.springframework.ide.service.eclipse.springBootNature.category">
+            id="org.springframework.ide.service.eclipse.serviceBasedToolingNature.category">
       </category>
       <command
-            name="Add/Remove Spring Boot Nature"
-            defaultHandler="org.springframework.ide.service.eclipse.builder.AddRemoveSpringBootNatureHandler"
-            categoryId="org.springframework.ide.service.eclipse.springBootNature.category"
-            id="org.springframework.ide.service.eclipse.addRemoveSpringBootNature">
+            name="Add/Remove Nature for Tooling Services"
+            defaultHandler="org.springframework.ide.service.eclipse.builder.AddRemoveServiceBasedToolingNatureHandler"
+            categoryId="org.springframework.ide.service.eclipse.serviceBasedToolingNature.category"
+            id="org.springframework.ide.service.eclipse.addRemoveServiceBasedToolingNature">
       </command>
    </extension>
    
@@ -47,8 +47,8 @@
       <menuContribution
             locationURI="popup:org.eclipse.ui.projectConfigure?after=additions">
          <command
-               commandId="org.springframework.ide.service.eclipse.addRemoveSpringBootNature"
-               label="Disable Spring Boot Builder"
+               commandId="org.springframework.ide.service.eclipse.addRemoveServiceBasedToolingNature"
+               label="Disable Service-based Project Builder"
                style="push">
             <visibleWhen
                   checkEnabled="false">
@@ -61,7 +61,7 @@
                      <adapt
                            type="org.eclipse.core.resources.IProject">
                         <test
-                              value="org.springframework.ide.service.eclipse.springBootNature"
+                              value="org.springframework.ide.service.eclipse.serviceBasedToolingNature"
                               property="org.eclipse.core.resources.projectNature">
                         </test>
                      </adapt>
@@ -70,8 +70,8 @@
             </visibleWhen>
          </command>
          <command
-               commandId="org.springframework.ide.service.eclipse.addRemoveSpringBootNature"
-               label="Enable Spring Boot Builder"
+               commandId="org.springframework.ide.service.eclipse.addRemoveServiceBasedToolingNature"
+               label="Enable Service-based Project Builder"
                style="push">
             <visibleWhen
                   checkEnabled="false">
@@ -85,7 +85,7 @@
                            type="org.eclipse.core.resources.IProject">
                         <not>
                            <test
-                                 value="org.springframework.ide.service.eclipse.springBootNature"
+                                 value="org.springframework.ide.service.eclipse.serviceBasedToolingNature"
                                  property="org.eclipse.core.resources.projectNature">
                            </test>
                         </not>
@@ -97,16 +97,4 @@
       </menuContribution>
    </extension>
    
-   <extension
-         id="xmlProblem"
-         name="XML Problem"
-         point="org.eclipse.core.resources.markers">
-      <super
-            type="org.eclipse.core.resources.problemmarker">
-      </super>
-      <persistent
-            value="true">
-      </persistent>
-   </extension>
-
 </plugin>

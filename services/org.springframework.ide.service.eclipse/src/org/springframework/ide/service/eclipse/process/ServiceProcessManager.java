@@ -18,22 +18,22 @@ import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguratio
 /**
  * @author Martin Lippert
  */
-public class ServiceManager {
+public class ServiceProcessManager {
 	
 	private Map<ServiceProcessConfiguration, ServiceProcess> services;
 	
-	public ServiceManager() {
+	public ServiceProcessManager() {
 		this.services = new ConcurrentHashMap<>();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				ServiceManager.this.services.values().forEach((process) -> process.kill());
+				ServiceProcessManager.this.services.values().forEach((process) -> process.kill());
 			}
 		}));
 	}
 
-	public void startServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
+	public ServiceProcess startServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {
 		ServiceProcess process = services.get(processConfig);
 		if (process != null) {
 			process.kill();
@@ -41,6 +41,7 @@ public class ServiceManager {
 		
 		ServiceProcess newProcess = ServiceProcessFactory.createServiceProcess(processConfig);
 		this.services.put(processConfig, newProcess);
+		return newProcess;
 	}
 
 	public void stopServiceProcess(ServiceProcessConfiguration processConfig) throws Exception {

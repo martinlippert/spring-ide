@@ -13,17 +13,19 @@ package org.springframework.ide.service.eclipse;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
-import org.springframework.ide.service.eclipse.process.ServiceManager;
+import org.springframework.ide.service.eclipse.process.ServiceProcessManager;
 
 public class Activator extends AbstractUIPlugin {
 
 	public static final String PLUGIN_ID = "org.springframework.ide.service.eclipse"; //$NON-NLS-1$
 	private static Activator plugin;
 	
+	private final ServiceProcessManager serviceProcessManager;
 	private final ServiceManager serviceManager;
 	
 	public Activator() {
-		this.serviceManager = new ServiceManager();
+		this.serviceProcessManager = new ServiceProcessManager();
+		this.serviceManager = new ServiceManager(this.serviceProcessManager);
 	}
 
 	public void start(BundleContext context) throws Exception {
@@ -47,4 +49,9 @@ public class Activator extends AbstractUIPlugin {
 	public ServiceManager getServiceManager() {
 		return this.serviceManager;
 	}
+	
+	public ServiceProcessManager getServiceProcessManager() {
+		return this.serviceProcessManager;
+	}
+
 }

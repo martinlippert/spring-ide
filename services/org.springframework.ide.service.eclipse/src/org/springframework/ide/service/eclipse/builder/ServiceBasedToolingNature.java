@@ -16,12 +16,9 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IProjectNature;
 import org.eclipse.core.runtime.CoreException;
 
-public class SpringBootNature implements IProjectNature {
+public class ServiceBasedToolingNature implements IProjectNature {
 
-	/**
-	 * ID of this project nature
-	 */
-	public static final String NATURE_ID = "org.springframework.ide.service.eclipse.springBootNature";
+	public static final String NATURE_ID = "org.springframework.ide.service.eclipse.serviceBasedToolingNature";
 
 	private IProject project;
 
@@ -31,7 +28,7 @@ public class SpringBootNature implements IProjectNature {
 		ICommand[] commands = desc.getBuildSpec();
 
 		for (int i = 0; i < commands.length; ++i) {
-			if (commands[i].getBuilderName().equals(SpringBuilderService.BUILDER_ID)) {
+			if (commands[i].getBuilderName().equals(ServiceBasedProjectBuilder.BUILDER_ID)) {
 				return;
 			}
 		}
@@ -39,7 +36,7 @@ public class SpringBootNature implements IProjectNature {
 		ICommand[] newCommands = new ICommand[commands.length + 1];
 		System.arraycopy(commands, 0, newCommands, 0, commands.length);
 		ICommand command = desc.newCommand();
-		command.setBuilderName(SpringBuilderService.BUILDER_ID);
+		command.setBuilderName(ServiceBasedProjectBuilder.BUILDER_ID);
 		newCommands[newCommands.length - 1] = command;
 		desc.setBuildSpec(newCommands);
 		project.setDescription(desc, null);
@@ -50,7 +47,7 @@ public class SpringBootNature implements IProjectNature {
 		IProjectDescription description = getProject().getDescription();
 		ICommand[] commands = description.getBuildSpec();
 		for (int i = 0; i < commands.length; ++i) {
-			if (commands[i].getBuilderName().equals(SpringBuilderService.BUILDER_ID)) {
+			if (commands[i].getBuilderName().equals(ServiceBasedProjectBuilder.BUILDER_ID)) {
 				ICommand[] newCommands = new ICommand[commands.length - 1];
 				System.arraycopy(commands, 0, newCommands, 0, i);
 				System.arraycopy(commands, i + 1, newCommands, i,

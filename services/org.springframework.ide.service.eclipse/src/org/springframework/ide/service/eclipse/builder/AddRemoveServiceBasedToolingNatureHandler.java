@@ -23,9 +23,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
 
-public class AddRemoveSpringBootNatureHandler extends AbstractHandler {
-
-	private ISelection selection;
+public class AddRemoveServiceBasedToolingNatureHandler extends AbstractHandler {
 
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection = HandlerUtil.getCurrentSelection(event);
@@ -53,18 +51,12 @@ public class AddRemoveSpringBootNatureHandler extends AbstractHandler {
 		return null;
 	}
 
-	/**
-	 * Toggles sample nature on a project
-	 *
-	 * @param project
-	 *            to have sample nature added or removed
-	 */
 	private void toggleNature(IProject project) throws CoreException {
 		IProjectDescription description = project.getDescription();
 		String[] natures = description.getNatureIds();
 
 		for (int i = 0; i < natures.length; ++i) {
-			if (SpringBootNature.NATURE_ID.equals(natures[i])) {
+			if (ServiceBasedToolingNature.NATURE_ID.equals(natures[i])) {
 				// Remove the nature
 				String[] newNatures = new String[natures.length - 1];
 				System.arraycopy(natures, 0, newNatures, 0, i);
@@ -78,7 +70,7 @@ public class AddRemoveSpringBootNatureHandler extends AbstractHandler {
 		// Add the nature
 		String[] newNatures = new String[natures.length + 1];
 		System.arraycopy(natures, 0, newNatures, 0, natures.length);
-		newNatures[natures.length] = SpringBootNature.NATURE_ID;
+		newNatures[natures.length] = ServiceBasedToolingNature.NATURE_ID;
 		description.setNatureIds(newNatures);
 		project.setDescription(description, null);
 	}

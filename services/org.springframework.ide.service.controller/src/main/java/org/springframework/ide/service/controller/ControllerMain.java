@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.springframework.ide.service.commands.GetFullModelCommand;
 import org.springframework.ide.service.commands.PingCommand;
 import org.springframework.ide.service.commands.SetupProjectCommand;
+import org.springframework.ide.service.commands.UpdateProjectSources;
 import org.springframework.ide.service.internal.ProjectRegistry;
 
 /**
@@ -48,6 +49,7 @@ public class ControllerMain {
 		CommandExecuter commandExecuter = new CommandExecuter(System.in, backChannel, projectRegistry, getAgentClasspath());
 		commandExecuter.addCommand(new PingCommand());
 		commandExecuter.addCommand(new SetupProjectCommand());
+		commandExecuter.addCommand(new UpdateProjectSources());
 		commandExecuter.addCommand(new GetFullModelCommand());
 		
 		commandExecuter.run();
