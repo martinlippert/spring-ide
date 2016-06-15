@@ -10,12 +10,12 @@
  *******************************************************************************/
 package org.springframework.ide.service.eclipse;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.springframework.ide.service.eclipse.builder.ClasspathChangedListener;
 import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
 import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
@@ -33,6 +33,8 @@ public class ServiceManager {
 	public ServiceManager(ServiceProcessManager serviceProcessManager) {
 		this.serviceProcessManager = serviceProcessManager;
 		this.toolingServices = new ConcurrentHashMap<>();
+		
+		JavaCore.addElementChangedListener(new ClasspathChangedListener());
 	}
 
 	public ToolingService getToolingService(ServiceConfiguration serviceConfiguration) throws Exception {
