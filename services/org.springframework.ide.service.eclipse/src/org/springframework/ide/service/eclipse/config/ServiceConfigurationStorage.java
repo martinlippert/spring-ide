@@ -33,9 +33,11 @@ import org.springframework.ide.service.eclipse.process.EnvironmentConfiguration;
  */
 public class ServiceConfigurationStorage {
 	
+	private static final String SERVICE_CONFIG_FILE = "tools-service-config.json";
+
 	public static ServiceConfiguration[] readConfigs(IProject project) {
 		try {
-			IResource serviceConfigfile = project.findMember(".serviceconfig");
+			IResource serviceConfigfile = project.findMember(SERVICE_CONFIG_FILE);
 			if (serviceConfigfile.exists() && serviceConfigfile.getType() == IResource.FILE) {
 				IFile configFile = (IFile) serviceConfigfile;
 					return readConfigs(configFile.getContents());

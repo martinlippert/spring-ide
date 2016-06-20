@@ -126,7 +126,7 @@ public class ServiceConfigurationStorageTest {
 			project.create(null);
 			project.open(null);
 			
-			IFile configFile = project.getFile(".serviceconfig");
+			IFile configFile = project.getFile("tools-service-config.json");
 			InputStream source = this.getClass().getResourceAsStream("real-project.serviceconfig");
 			configFile.create(source, true, null);
 			
