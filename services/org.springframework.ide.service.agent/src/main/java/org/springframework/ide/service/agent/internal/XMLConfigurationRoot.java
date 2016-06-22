@@ -32,4 +32,9 @@ public class XMLConfigurationRoot implements ConfigurationRoot {
 	public void createModel() {
 	}
 
+	@Override
+	public ModelBuildingApplicationContext getAppContext() {
+		return null;
+	}
+
 }

@@ -20,7 +20,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.springframework.ide.service.eclipse.Activator;
 import org.springframework.ide.service.eclipse.ServiceManager;
 import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
-import org.springframework.ide.service.eclipse.config.ServiceConfigurationStorage;
 import org.springframework.ide.service.eclipse.process.ToolingService;
 
 public class ServiceBasedProjectBuilder extends IncrementalProjectBuilder {
@@ -48,15 +47,24 @@ public class ServiceBasedProjectBuilder extends IncrementalProjectBuilder {
 
 	protected void fullBuild(final IProgressMonitor monitor)
 			throws CoreException {
-		ServiceConfiguration[] serviceConfigs = getServiceConfigs(getProject());
+		ServiceManager serviceManager = Activator.getDefault().getServiceManager();
+		ServiceConfiguration[] serviceConfigs = serviceManager.getServiceConfigs(getProject());
 		for (int i = 0; i < serviceConfigs.length; i++) {
-			fullBuild(serviceConfigs[i], monitor);
+			fullBuild(serviceManager, serviceConfigs[i], monitor);
 		}
 	}
 
-	private void fullBuild(ServiceConfiguration serviceConfiguration, IProgressMonitor monitor) {
+	protected void incrementalBuild(IResourceDelta delta,
+			IProgressMonitor monitor) throws CoreException {
+		ServiceManager serviceManager = Activator.getDefault().getServiceManager();
+		ServiceConfiguration[] serviceConfigs = serviceManager.getServiceConfigs(getProject());
+		for (int i = 0; i < serviceConfigs.length; i++) {
+			incrementalBuild(serviceManager, serviceConfigs[i], delta, monitor);
+		}
+	}
+	
+	private void fullBuild(ServiceManager serviceManager, ServiceConfiguration serviceConfiguration, IProgressMonitor monitor) {
 		try {
-			ServiceManager serviceManager = Activator.getDefault().getServiceManager();
 			ToolingService toolingService = serviceManager.getToolingService(serviceConfiguration);
 			toolingService.triggerFullBuild();
 		}
@@ -65,28 +73,14 @@ public class ServiceBasedProjectBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	protected void incrementalBuild(IResourceDelta delta,
-			IProgressMonitor monitor) throws CoreException {
-		ServiceConfiguration[] serviceConfigs = getServiceConfigs(getProject());
-		for (int i = 0; i < serviceConfigs.length; i++) {
-			incrementalBuild(serviceConfigs[i], delta, monitor);
-		}
-	}
-	
-	private void incrementalBuild(ServiceConfiguration serviceConfiguration, IResourceDelta delta, IProgressMonitor monitor) {
+	private void incrementalBuild(ServiceManager serviceManager, ServiceConfiguration serviceConfiguration, IResourceDelta delta, IProgressMonitor monitor) {
 		try {
-			ServiceManager serviceManager = Activator.getDefault().getServiceManager();
 			ToolingService toolingService = serviceManager.getToolingService(serviceConfiguration);
 			toolingService.triggerIncrementalBuild(delta);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private ServiceConfiguration[] getServiceConfigs(IProject project) {
-		ServiceConfiguration[] configs = ServiceConfigurationStorage.readConfigs(project);
-		return configs;
 	}
 
 }

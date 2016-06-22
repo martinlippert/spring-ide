@@ -43,6 +43,11 @@ public class JavaConfigurationRoot implements ConfigurationRoot {
 		}
 	}
 
+	@Override
+	public ModelBuildingApplicationContext getAppContext() {
+		return this.context;
+	}
+
 	protected void setupModelCreation(String rootClassName) throws Exception {
 		ClassLoader classLoader = this.getClass().getClassLoader();
 		
@@ -64,5 +69,6 @@ public class JavaConfigurationRoot implements ConfigurationRoot {
 		// AnnotatedBeanDefinitionReader(this.registry);
 		// definitionReader.register(rootClass);
 	}
+
 
 }

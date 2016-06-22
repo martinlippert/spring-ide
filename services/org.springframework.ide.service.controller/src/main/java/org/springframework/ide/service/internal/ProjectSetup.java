@@ -29,6 +29,9 @@ public class ProjectSetup {
 	private static final String AGENT_CREATE_MODEL_METHOD = "createModel";
 	private static final Class<?>[] AGENT_CREATE_MODEL_PARAMETERS = new Class<?>[] {};
 	
+	private static final String AGENT_GET_BEAN_NAMES_METHOD = "getBeanNames";
+	private static final Class<?>[] AGENT_GET_BEAN_NAMES_PARAMETERS = new Class<?>[] {String.class};
+	
 	private final Project project;
 	
 	private URLClassLoader libLoader;
@@ -80,6 +83,11 @@ public class ProjectSetup {
 	public void createModel() throws Exception {
 		Method createModelMethod = agentMainClass.getMethod(AGENT_CREATE_MODEL_METHOD, AGENT_CREATE_MODEL_PARAMETERS);
 		createModelMethod.invoke(null,  new Object[] {});
+	}
+	
+	public String[] getBeanNames(String typeHint) throws Exception {
+		Method getBeanNamesMethod = agentMainClass.getMethod(AGENT_GET_BEAN_NAMES_METHOD, AGENT_GET_BEAN_NAMES_PARAMETERS);
+		return (String[]) getBeanNamesMethod.invoke(null,  new Object[] {typeHint});
 	}
 
 	public void close() {

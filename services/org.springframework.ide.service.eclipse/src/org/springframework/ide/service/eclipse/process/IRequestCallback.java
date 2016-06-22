@@ -8,19 +8,15 @@
  * Contributors:
  *     Pivotal, Inc. - initial API and implementation
  *******************************************************************************/
-package org.springframework.ide.service.agent;
+package org.springframework.ide.service.eclipse.process;
 
-import org.springframework.ide.service.agent.internal.ModelBuildingApplicationContext;
+import org.json.JSONObject;
 
 /**
  * @author Martin Lippert
  */
-public interface ConfigurationRoot {
+public interface IRequestCallback {
 	
-	static String JAVA_CONFIG_ROOT_PREFIX = "java:";
-	static String XML_CONFIG_ROOT_PREFIX = "xml:";
-
-	void createModel();
-	ModelBuildingApplicationContext getAppContext();
+	public void responseReceived(JSONObject response);
 
 }

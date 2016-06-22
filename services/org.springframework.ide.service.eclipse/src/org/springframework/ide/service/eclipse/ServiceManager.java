@@ -17,6 +17,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.springframework.ide.service.eclipse.builder.ClasspathChangedListener;
 import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
+import org.springframework.ide.service.eclipse.config.ServiceConfigurationStorage;
 import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;
 import org.springframework.ide.service.eclipse.process.ServiceProcess;
 import org.springframework.ide.service.eclipse.process.ServiceProcessManager;
@@ -61,6 +62,11 @@ public class ServiceManager {
 			
 			return service;
 		}
+	}
+	
+	public ServiceConfiguration[] getServiceConfigs(IProject project) {
+		ServiceConfiguration[] configs = ServiceConfigurationStorage.readConfigs(project);
+		return configs;
 	}
 	
 	public void classpathChanged(IProject project) {

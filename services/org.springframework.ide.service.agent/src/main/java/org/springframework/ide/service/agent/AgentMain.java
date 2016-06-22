@@ -26,5 +26,9 @@ public class AgentMain {
 	public static void createModel() {
 		modelCreator.createModel();
 	}
+	
+	public static String[] getBeanNames(String typeHint) {
+		return modelCreator.getBeanNames(typeHint);
+	}
 
 }

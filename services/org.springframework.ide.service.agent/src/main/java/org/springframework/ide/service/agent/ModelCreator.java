@@ -11,9 +11,13 @@
 package org.springframework.ide.service.agent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.ide.service.agent.internal.JavaConfigurationRoot;
+import org.springframework.ide.service.agent.internal.ModelBuildingApplicationContext;
 import org.springframework.ide.service.agent.internal.XMLConfigurationRoot;
 
 /**
@@ -41,6 +45,29 @@ public class ModelCreator {
 		for (int i = 0; i < configRoots.length; i++) {
 			configRoots[i].createModel();
 		}
+	}
+
+	/**
+	 * @param typeHint fully qualified type for beans to match this type or null, if no hint is available
+	 */
+	public String[] getBeanNames(String typeHint) {
+		Set<String> result = new LinkedHashSet<>();
+		
+		for (int i = 0; i < configRoots.length; i++) {
+			ModelBuildingApplicationContext appContext = configRoots[i].getAppContext();
+			
+			Class<?> typeHintClass = null;
+			try {
+				typeHintClass = this.getClass().getClassLoader().loadClass(typeHint);
+			}
+			catch (Exception e) {
+			}
+
+			String[] beanNames = appContext.getBeanNamesForType(typeHintClass);
+			result.addAll(Arrays.asList(beanNames));
+		}
+
+		return (String[]) result.toArray(new String[result.size()]);
 	}
 
 }

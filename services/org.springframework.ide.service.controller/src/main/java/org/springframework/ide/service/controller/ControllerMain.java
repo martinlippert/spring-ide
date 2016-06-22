@@ -16,6 +16,7 @@ import java.net.URL;
 
 import org.json.JSONObject;
 import org.springframework.ide.service.commands.GetFullModelCommand;
+import org.springframework.ide.service.commands.GetSpringBeanNamesCommand;
 import org.springframework.ide.service.commands.PingCommand;
 import org.springframework.ide.service.commands.SetupProjectCommand;
 import org.springframework.ide.service.commands.UpdateProjectSources;
@@ -51,6 +52,7 @@ public class ControllerMain {
 		commandExecuter.addCommand(new SetupProjectCommand());
 		commandExecuter.addCommand(new UpdateProjectSources());
 		commandExecuter.addCommand(new GetFullModelCommand());
+		commandExecuter.addCommand(new GetSpringBeanNamesCommand());
 		
 		commandExecuter.run();
 	}

@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.springframework.ide.service.eclipse.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.InputStream;
 
@@ -20,7 +21,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.junit.Test;
-import org.springframework.ide.service.eclipse.Activator;
 import org.springframework.ide.service.eclipse.config.ServiceConfiguration;
 import org.springframework.ide.service.eclipse.config.ServiceConfigurationStorage;
 import org.springframework.ide.service.eclipse.config.ServiceProcessConfiguration;

@@ -14,6 +14,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IPathVariableManager;
 import org.eclipse.core.resources.IProject;
@@ -41,17 +44,29 @@ public class ToolingService {
 	private final ServiceConfiguration serviceConfiguration;
 	private final MessageListener messageListener;
 	
+	private Map<String, IRequestCallback> waitingRequests;
+	
 	private boolean initialized;
 	private boolean updateClasspath;
 
 	public ToolingService(ServiceConfiguration serviceConfiguration, ServiceProcess serviceProcess) {
 		this.serviceConfiguration = serviceConfiguration;
 		this.serviceProcess = serviceProcess;
+		this.waitingRequests = new ConcurrentHashMap<>();
 		
 		this.messageListener = new MessageListener() {
 			@Override
 			public void messageReceived(JSONObject message) {
 				System.out.println("tooling message received: " + message.toString());
+				
+				if (message.has("requestID")) {
+					String requestID = message.optString("requestID");
+					IRequestCallback callback = waitingRequests.get(requestID);
+					if (callback != null) {
+						waitingRequests.remove(requestID);
+						callback.responseReceived(message);
+					}
+				}
 			}
 		};
 		
@@ -75,6 +90,18 @@ public class ToolingService {
 		else {
 			triggerUpdate();
 		}
+	}
+	
+	public void requestBeanNames(String typeHint, IRequestCallback callback) throws Exception {
+		String requestID = UUID.randomUUID().toString();
+		
+		JSONObject requestMessage = new JSONObject();
+		requestMessage.put("command-name", "get-spring-bean-names");
+		requestMessage.put("project-name", serviceConfiguration.getProject().getName());
+		requestMessage.put("requestID", requestID);
+		requestMessage.put("type-hint", typeHint);
+		
+		this.waitingRequests.put(requestID, callback);
 	}
 
 	private void triggerUpdate() throws Exception {
