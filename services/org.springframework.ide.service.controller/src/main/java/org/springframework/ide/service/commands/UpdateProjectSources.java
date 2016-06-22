@@ -33,9 +33,6 @@ public class UpdateProjectSources implements Command {
 		long startTime = System.currentTimeMillis();
 		
 		String projectName = command.getString("project-name");
-		System.out.println("-------");
-		System.out.println("project update command received !!!");
-		System.out.println("-------");
 		
 		if (projectRegistry.has(projectName)) {
 			ProjectSetup projectSetup = projectRegistry.get(projectName);
